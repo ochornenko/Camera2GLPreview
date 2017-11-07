@@ -1,19 +1,19 @@
-#include "VideoRender.h"
-#include "VideoRenderYUV420.h"
+#include "VideoRenderer.h"
+#include "VideoRendererYUV420.h"
 
-VideoRender::VideoRender()
+VideoRenderer::VideoRenderer()
 	: m_program(0)
 	, m_vertexShader(0)
 	, m_pixelShader(0)
 	, m_width(0)
 	, m_height(0)
-	, isDataChanged(false)
+	, isDirty(false)
 	, isOrientationChanged(false)
 {
 
 }
 
-VideoRender::~VideoRender()
+VideoRenderer::~VideoRenderer()
 {
 	if (m_vertexShader)
     {
@@ -36,12 +36,12 @@ VideoRender::~VideoRender()
 	}
 }
 
-std::unique_ptr<VideoRender> VideoRender::create(int type)
+std::unique_ptr<VideoRenderer> VideoRenderer::create(int type)
 {
 	switch(type)
     {
 		case tYUV420:
 		default:
-			return std::unique_ptr<VideoRender>(std::make_unique<VideoRenderYUV420>());
+			return std::unique_ptr<VideoRenderer>(std::make_unique<VideoRendererYUV420>());
 	}
 }

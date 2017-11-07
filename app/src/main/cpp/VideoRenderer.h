@@ -1,5 +1,5 @@
-#ifndef _H_VIDEO_RENDER_
-#define _H_VIDEO_RENDER_
+#ifndef _H_VIDEO_RENDERER_
+#define _H_VIDEO_RENDERER_
 
 #include "GLUtils.h"
 
@@ -19,10 +19,12 @@ struct video_frame
 	uint8_t* v;
 };
 
-class VideoRender {
+class VideoRenderer {
 public:
-	VideoRender();
-	virtual ~VideoRender();
+	VideoRenderer();
+	virtual ~VideoRenderer();
+
+    static std::unique_ptr<VideoRenderer> create(int type);
 
 	virtual void render() = 0;
 	virtual void updateFrame(const video_frame& frame) = 0;
@@ -33,8 +35,6 @@ public:
 	virtual GLuint createProgram() = 0;
 	virtual GLuint useProgram() = 0;
 
-	static std::unique_ptr<VideoRender> create(int type);
-
 protected:
 	GLuint m_program;
 	GLuint m_vertexShader;
@@ -43,8 +43,8 @@ protected:
 	size_t m_width;
 	size_t m_height;
 
-	bool isDataChanged;
+	bool isDirty;
 	bool isOrientationChanged;
 };
 
-#endif // _H_VIDEO_RENDER_
+#endif // _H_VIDEO_RENDERER_

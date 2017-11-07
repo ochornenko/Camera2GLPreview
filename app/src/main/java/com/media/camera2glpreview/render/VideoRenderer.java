@@ -9,11 +9,11 @@ import javax.microedition.khronos.opengles.GL10;
  * Created by oleg on 11/2/17.
  */
 
-public class VideoRender implements GLSurfaceView.Renderer {
+public class VideoRenderer implements GLSurfaceView.Renderer {
     private long mNativeContext; // using by native
     private GLSurfaceView mGLSurface;
 
-    public VideoRender() {
+    public VideoRenderer() {
         create();
     }
 

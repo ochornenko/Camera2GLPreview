@@ -18,15 +18,14 @@ import android.widget.FrameLayout;
 
 import com.media.camera2glpreview.capture.PreviewFrameHandler;
 import com.media.camera2glpreview.capture.VideoCameraPreview;
-import com.media.camera2glpreview.render.VideoRender;
+import com.media.camera2glpreview.render.VideoRenderer;
 
 public class MainActivity extends FragmentActivity implements PreviewFrameHandler, ActivityCompat.OnRequestPermissionsResultCallback {
 
     private static final int REQUEST_CAMERA_PERMISSION = 1;
     private static final String FRAGMENT_DIALOG = "dialog";
 
-    private VideoRender mVideoRender;
-    private VideoCameraPreview mPreview;
+    private VideoRenderer mVideoRenderer;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -38,12 +37,12 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
             requestCameraPermission();
         }
 
-        mVideoRender = new VideoRender();
+        mVideoRenderer = new VideoRenderer();
         GLSurfaceView glSurfaceView = findViewById(R.id.gl_surface_view);
 
-        mVideoRender.init(glSurfaceView);
+        mVideoRenderer.init(glSurfaceView);
 
-        mPreview = new VideoCameraPreview(this);
+        VideoCameraPreview mPreview = new VideoCameraPreview(this);
         ((FrameLayout) findViewById(R.id.preview)).addView(mPreview);
     }
 
@@ -51,14 +50,14 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
     public void onDestroy() {
         super.onDestroy();
 
-        mVideoRender.destroyRender();
+        mVideoRenderer.destroyRender();
     }
 
     @Override
     public void onPreviewFrame(byte[] data, int width, int height) {
 
-        mVideoRender.drawVideoFrame(data, width, height);
-        mVideoRender.requestRender();
+        mVideoRenderer.drawVideoFrame(data, width, height);
+        mVideoRenderer.requestRender();
     }
 
     @Override

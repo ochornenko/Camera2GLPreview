@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 #define JCMCRV(rettype, name)                                             \
-  rettype JNIEXPORT JNICALL Java_com_media_camera2glpreview_render_VideoRender_##name
+  rettype JNIEXPORT JNICALL Java_com_media_camera2glpreview_render_VideoRenderer_##name
 
 JCMCRV(void, create)(JNIEnv * env, jobject obj);
 JCMCRV(void, destroy)(JNIEnv * env, jobject obj);

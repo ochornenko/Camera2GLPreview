@@ -20,10 +20,10 @@ add_library( # Sets the name of the library.
 
              # Provides a relative path to your source file(s).
              src/main/cpp/GLUtils.cpp
-             src/main/cpp/VideoRender.cpp
-             src/main/cpp/VideoRenderYUV420.cpp
-             src/main/cpp/VideoRenderContext.cpp
-             src/main/cpp/VideoRenderJNI.cpp )
+             src/main/cpp/VideoRenderer.cpp
+             src/main/cpp/VideoRendererYUV420.cpp
+             src/main/cpp/VideoRendererContext.cpp
+             src/main/cpp/VideoRendererJNI.cpp )
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by

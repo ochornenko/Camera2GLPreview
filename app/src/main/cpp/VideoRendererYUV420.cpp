@@ -1,4 +1,4 @@
-#include "VideoRenderYUV420.h"
+#include "VideoRendererYUV420.h"
 
 #include <cmath>
 
@@ -7,50 +7,52 @@ static const float kVertices[8] = {
   -1.f, 1.f,
   -1.f, -1.f,
   1.f, 1.f,
-  1.f, -1.f,
+  1.f, -1.f
 };
 
-// Texture Coordinates mapping the entire texture.
+// Texture coordinates for mapping entire texture.
 static const float kTextureCoords[8] = {
   0, 0,
   0, 1,
   1, 0,
-  1, 1,
+  1, 1
 };
 
-// Pass-through vertex shader.
+// Vertex shader.
 static const char kVertexShader[] =
-    "varying vec2 interp_tc;\n"
-    "\n"
-    "attribute vec4 in_pos;\n"
-    "attribute vec2 in_tc;\n"
+    "#version 100\n"
+    "varying vec2 v_texcoord;\n"
+    "attribute vec4 position;\n"
+    "attribute vec2 texcoord;\n"
 	"uniform mat4 projection;\n"
     "uniform mat4 model_view;\n"
-    "\n"
     "void main() {\n"
-    "  interp_tc = in_tc;\n"
-    "  gl_Position = projection * model_view * in_pos;\n"
+    "   v_texcoord = texcoord;\n"
+    "   gl_Position = projection * model_view * position;\n"
     "}\n";
 
-// YUV to RGB pixel shader. Loads a pixel from each plane and pass through the
-// matrix.
+// YUV420 to RGB conversion, pixel shader.
 static const char kFragmentShader[] =
-    "precision highp float;\n"
-	"varying vec2 interp_tc;\n"
-	"uniform sampler2D y_tex;\n"
-	"uniform sampler2D u_tex;\n"
-	"uniform sampler2D v_tex;\n"
+    "#version 100\n"
+    "precision highp float;"
+    "varying vec2 v_texcoord;\n"
+    "uniform lowp sampler2D s_textureY;\n"
+    "uniform lowp sampler2D s_textureU;\n"
+    "uniform lowp sampler2D s_textureV;\n"
     "void main() {\n"
-	"  float y = texture2D(y_tex, interp_tc).r;\n"
-    "  float u = texture2D(u_tex, interp_tc).r - .5;\n"
-    "  float v = texture2D(v_tex, interp_tc).r - .5;\n"
-	"  float r = y +             1.402 * v;\n"
-	"  float g = y - 0.344 * u - 0.714 * v;\n"
-	"  float b = y + 1.772 * u;\n"
-	"  gl_FragColor = vec4(r, g, b, 1.0);\n"
+    "   float y, u, v, r, g, b;\n"
+    "   y = texture2D(s_textureY, v_texcoord).r;\n"
+    "   u = texture2D(s_textureU, v_texcoord).r;\n"
+    "   v = texture2D(s_textureV, v_texcoord).r;\n"
+    "   u = u - 0.5;\n"
+    "   v = v - 0.5;\n"
+    "   r = y + 1.403 * v;\n"
+    "   g = y - 0.344 * u - 0.714 * v;\n"
+    "   b = y + 1.770 * u;\n"
+    "   gl_FragColor = vec4(r, g, b, 1.0);\n"
     "}\n";
 
-VideoRenderYUV420::VideoRenderYUV420()
+VideoRendererYUV420::VideoRendererYUV420()
     : m_length(0)
 	, m_pDataY(nullptr)
 	, m_pDataU(nullptr)
@@ -71,12 +73,12 @@ VideoRenderYUV420::VideoRenderYUV420()
 	isOrientationChanged = true;
 }
 
-VideoRenderYUV420::~VideoRenderYUV420()
+VideoRendererYUV420::~VideoRendererYUV420()
 {
 	deleteTextures();
 }
 
-void VideoRenderYUV420::render()
+void VideoRendererYUV420::render()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -87,7 +89,7 @@ void VideoRenderYUV420::render()
     check_gl_error("glDrawArrays");
 }
 
-void VideoRenderYUV420::updateFrame(const video_frame& frame)
+void VideoRendererYUV420::updateFrame(const video_frame& frame)
 {
 	m_sizeY = frame.width * frame.height;
 	m_sizeU = frame.width * frame.height / 4;
@@ -146,10 +148,10 @@ void VideoRenderYUV420::updateFrame(const video_frame& frame)
 		}
 	}
 
-	isDataChanged = true;
+	isDirty = true;
 }
 
-void VideoRenderYUV420::draw(uint8_t *buffer, size_t length, size_t width, size_t height)
+void VideoRendererYUV420::draw(uint8_t *buffer, size_t length, size_t width, size_t height)
 {
     m_length = length;
 
@@ -165,7 +167,7 @@ void VideoRenderYUV420::draw(uint8_t *buffer, size_t length, size_t width, size_
 	updateFrame(frame);
 }
 
-bool VideoRenderYUV420::createTextures()
+bool VideoRendererYUV420::createTextures()
 {
     GLsizei widthY = (GLsizei)m_width;
     GLsizei heightY = (GLsizei)m_height;
@@ -212,11 +214,11 @@ bool VideoRenderYUV420::createTextures()
 	return true;
 }
 
-bool VideoRenderYUV420::updateTextures()
+bool VideoRendererYUV420::updateTextures()
 {
-	if (!m_texIdY && !createTextures()) return false;
+	if (!m_texIdY && !m_texIdU && !m_texIdV && !createTextures()) return false;
 
-	if (isDataChanged)
+	if (isDirty)
     {
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, m_texIdY);
@@ -238,14 +240,16 @@ bool VideoRenderYUV420::updateTextures()
                      GL_LUMINANCE, GL_UNSIGNED_BYTE, m_pDataV.get());
 
         check_gl_error("Update V texture");
+
+        isDirty = false;
+
+        return true;
 	}
 
-	isDataChanged = false;
-
-	return true;
+	return false;
 }
 
-void VideoRenderYUV420::deleteTextures()
+void VideoRendererYUV420::deleteTextures()
 {
 	if (m_texIdY)
     {
@@ -281,7 +285,7 @@ void VideoRenderYUV420::deleteTextures()
 	}
 }
 
-GLuint VideoRenderYUV420::createProgram()
+GLuint VideoRendererYUV420::createProgram()
 {
 	m_program = ::create_program(kVertexShader, kFragmentShader, m_vertexShader, m_pixelShader);
 	if (!m_program)
@@ -290,26 +294,26 @@ GLuint VideoRenderYUV420::createProgram()
 		LOGE("Could not create program.");
 	}
 
-	m_vertexPos = (GLuint)glGetAttribLocation(m_program, "in_pos");
-    check_gl_error("glGetAttribLocation");
+	m_vertexPos = (GLuint)glGetAttribLocation(m_program, "position");
+    check_gl_error("glGetAttribLocation position");
 
 	m_uniformMatrix = glGetUniformLocation(m_program, "projection");
     check_gl_error("glGetUniformLocation modelviewProj");
 
-	m_texYLoc = glGetUniformLocation(m_program, "y_tex");
-    check_gl_error("glGetUniformLocation y_tex");
-	m_texULoc = glGetUniformLocation(m_program, "u_tex");
-    check_gl_error("glGetUniformLocation u_tex");
-	m_texVLoc = glGetUniformLocation(m_program, "v_tex");
-    check_gl_error("glGetUniformLocation v_tex");
+	m_texYLoc = glGetUniformLocation(m_program, "s_textureY");
+    check_gl_error("glGetUniformLocation s_textureY");
+	m_texULoc = glGetUniformLocation(m_program, "s_textureU");
+    check_gl_error("glGetUniformLocation s_textureU");
+	m_texVLoc = glGetUniformLocation(m_program, "s_textureV");
+    check_gl_error("glGetUniformLocation s_textureV");
 
-	m_texLoc = (GLuint)glGetAttribLocation(m_program, "in_tc");
-    check_gl_error("glGetAttribLocation in_tc.");
+	m_texLoc = (GLuint)glGetAttribLocation(m_program, "texcoord");
+    check_gl_error("glGetAttribLocation texcoord.");
 
 	return m_program;
 }
 
-GLuint VideoRenderYUV420::useProgram()
+GLuint VideoRendererYUV420::useProgram()
 {
 	if (!m_program && !createProgram())
     {
@@ -336,13 +340,13 @@ GLuint VideoRenderYUV420::useProgram()
         applyRotationZ(90);
 
 		glUniform1i(m_texYLoc, 0);
-        check_gl_error("Set uniform y_tex.");
+        check_gl_error("Set uniform s_textureY.");
 
 		glUniform1i(m_texULoc, 1);
-        check_gl_error("Set uniform u_tex.");
+        check_gl_error("Set uniform s_textureU.");
 
 		glUniform1i(m_texVLoc, 2);
-        check_gl_error("Set uniform v_tex.");
+        check_gl_error("Set uniform s_textureV.");
 
 		glVertexAttribPointer(m_texLoc, 2, GL_FLOAT, GL_FALSE, 0, kTextureCoords);
         check_gl_error("glVertexAttribPointer");
@@ -355,7 +359,7 @@ GLuint VideoRenderYUV420::useProgram()
 	return m_program;
 }
 
-void VideoRenderYUV420::applyRotationZ(float degrees)
+void VideoRendererYUV420::applyRotationZ(float degrees)
 {
     float radians = degrees * 3.14159f / 180.0f;
     float s = std::sin(radians);

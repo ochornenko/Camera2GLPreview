@@ -1,14 +1,14 @@
-#include "VideoRenderJNI.h"
-#include "VideoRenderContext.h"
+#include "VideoRendererJNI.h"
+#include "VideoRendererContext.h"
 
 JCMCRV(void, create)(JNIEnv * env, jobject obj)
 {
-    VideoRenderContext::createContext(env, obj);
+    VideoRendererContext::createContext(env, obj);
 }
 
 JCMCRV(void, destroy)(JNIEnv * env, jobject obj)
 {
-    VideoRenderContext::deleteContext(env, obj);
+    VideoRendererContext::deleteContext(env, obj);
 }
 
 JCMCRV(void, init)(JNIEnv * env, jobject obj,  jint width, jint height)
@@ -18,7 +18,7 @@ JCMCRV(void, init)(JNIEnv * env, jobject obj,  jint width, jint height)
 
 JCMCRV(void, render)(JNIEnv * env, jobject obj)
 {
-	VideoRenderContext* context = VideoRenderContext::getContext(env, obj);
+	VideoRendererContext* context = VideoRendererContext::getContext(env, obj);
 
 	if (context) context->render();
 }
@@ -29,7 +29,7 @@ JCMCRV(void, draw)(JNIEnv * env, jobject obj, jbyteArray data, jint width, jint 
 
 	jsize arrayLength = env->GetArrayLength(data);
 
-	VideoRenderContext* context = VideoRenderContext::getContext(env, obj);
+	VideoRendererContext* context = VideoRendererContext::getContext(env, obj);
 
 	if (context) context->draw((uint8_t *) bufferPtr, (size_t)arrayLength, (size_t)width, (size_t)height);
 

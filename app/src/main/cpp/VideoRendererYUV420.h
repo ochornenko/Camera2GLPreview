@@ -1,13 +1,13 @@
 #ifndef _H_VIDEO_RENDER_YUV_
 #define _H_VIDEO_RENDER_YUV_
 
-#include "VideoRender.h"
+#include "VideoRenderer.h"
 
-class VideoRenderYUV420 : public VideoRender
+class VideoRendererYUV420 : public VideoRenderer
 {
 public:
-	VideoRenderYUV420();
-	virtual ~VideoRenderYUV420();
+	VideoRendererYUV420();
+	virtual ~VideoRendererYUV420();
 	virtual void render() override;
 	virtual void updateFrame(const video_frame& frame) override;
 	virtual void draw(uint8_t *buffer, size_t length, size_t width, size_t height) override;
