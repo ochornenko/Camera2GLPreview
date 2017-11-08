@@ -16,12 +16,10 @@ import android.os.HandlerThread;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
-import android.util.SparseIntArray;
-import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -33,10 +31,8 @@ import java.util.concurrent.TimeUnit;
 public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Callback {
     private static final String TAG = VideoCameraPreview.class.toString();
 
-    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
     private VideoCapture mVideoCapture;
     private Context mContext;
-    private SurfaceHolder mHolder;
     private CameraCaptureSession mCaptureSession;
     private CameraDevice mCameraDevice;
     private String mCameraId;
@@ -44,26 +40,18 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
     private HandlerThread mBackgroundThread;
     private ImageReader mImageReader;
     private Semaphore mCameraOpenCloseLock = new Semaphore(1);
-    private int mSensorOrientation;
-
-    static {
-        ORIENTATIONS.append(Surface.ROTATION_0, 90);
-        ORIENTATIONS.append(Surface.ROTATION_90, 0);
-        ORIENTATIONS.append(Surface.ROTATION_180, 270);
-        ORIENTATIONS.append(Surface.ROTATION_270, 180);
-    }
+    private Integer mSensorOrientation;
 
     public VideoCameraPreview(Context context) {
         super(context);
 
         mContext = context;
 
-        mHolder = getHolder();
-        mHolder.addCallback(this);
+        getHolder().addCallback(this);
 
         mVideoCapture = new VideoCapture((PreviewFrameHandler) context);
 
-        Log.i(TAG, "VCamera VideoCameraPreview");
+        Log.i(TAG, "VideoCameraPreview");
     }
 
     public void surfaceCreated(SurfaceHolder holder) {
@@ -76,12 +64,12 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
 
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
         mImageReader = ImageReader.newInstance(640, 480, ImageFormat.YUV_420_888, 2);
-        mImageReader.setOnImageAvailableListener(mVideoCapture, null);
+        mImageReader.setOnImageAvailableListener(mVideoCapture, mBackgroundHandler);
         openCamera();
     }
 
-    private int getOrientation(int rotation) {
-        return (ORIENTATIONS.get(rotation) + mSensorOrientation + 270) % 360;
+    public Integer getSensorOrientation() {
+        return mSensorOrientation;
     }
 
     /**
@@ -93,9 +81,9 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
             return;
         }
 
-        Log.i(TAG, "VCamera openCamera");
+        Log.i(TAG, "openCamera");
 
-        //startBackgroundThread();
+        startBackgroundThread();
 
         CameraManager manager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
         try {
@@ -110,9 +98,10 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
                 if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
                     continue;
                 }
+                mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
                 mCameraId = cameraId;
             }
-            manager.openCamera(mCameraId, mStateCallback, null);//mBackgroundHandler);
+            manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -138,10 +127,10 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
             throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
         } finally {
             mCameraOpenCloseLock.release();
-            //stopBackgroundThread();
+            stopBackgroundThread();
         }
 
-        Log.i(TAG, "VCamera closeCamera");
+        Log.i(TAG, "closeCamera");
     }
 
     /**
@@ -208,10 +197,11 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
 
     private void createCaptureSession() {
         try {
-            mCameraDevice.createCaptureSession(Arrays.asList(mImageReader.getSurface()), sessionStateCallback, null);
+            mCameraDevice.createCaptureSession(Collections.singletonList(mImageReader.getSurface()),
+                    sessionStateCallback, mBackgroundHandler);
 
         } catch (CameraAccessException e) {
-            Log.e(TAG, "VCamera createCaptureSession " + e.toString());
+            Log.e(TAG, "createCaptureSession " + e.toString());
         }
     }
 
@@ -220,18 +210,23 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
      */
     private CameraCaptureSession.StateCallback sessionStateCallback = new CameraCaptureSession.StateCallback() {
         @Override
-        public void onConfigured(CameraCaptureSession session) {
+        public void onConfigured(@NonNull CameraCaptureSession session) {
             mCaptureSession = session;
             try {
-                session.setRepeatingRequest(createCaptureRequest(), null, null);
+                CaptureRequest captureRequest = createCaptureRequest();
+                if (captureRequest != null) {
+                    session.setRepeatingRequest(captureRequest, null, mBackgroundHandler);
+                } else {
+                    Log.e(TAG, "captureRequest is null");
+                }
             } catch (CameraAccessException e){
-                Log.e(TAG, "VCamera onConfigured " + e.toString());
+                Log.e(TAG, "onConfigured " + e.toString());
             }
         }
 
         @Override
-        public void onConfigureFailed(CameraCaptureSession session) {
-            Log.e(TAG, "VCamera onConfigureFailed");
+        public void onConfigureFailed(@NonNull CameraCaptureSession session) {
+            Log.e(TAG, "onConfigureFailed");
         }
     };
 }

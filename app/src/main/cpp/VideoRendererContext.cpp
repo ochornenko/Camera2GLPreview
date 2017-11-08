@@ -12,14 +12,19 @@ VideoRendererContext::~VideoRendererContext()
 
 }
 
+void VideoRendererContext::init(size_t width, size_t height)
+{
+    m_pVideoRenderer->init(width, height);
+}
+
 void VideoRendererContext::render()
 {
 	m_pVideoRenderer->render();
 }
 
-void VideoRendererContext::draw(uint8_t *buffer, size_t length, size_t width, size_t height)
+void VideoRendererContext::draw(uint8_t *buffer, size_t length, size_t width, size_t height, int rotation)
 {
-    m_pVideoRenderer->draw(buffer, length, width, height);
+    m_pVideoRenderer->draw(buffer, length, width, height, rotation);
 }
 
 void VideoRendererContext::createContext(JNIEnv *env, jobject obj)

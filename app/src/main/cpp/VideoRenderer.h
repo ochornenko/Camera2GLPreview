@@ -26,9 +26,10 @@ public:
 
     static std::unique_ptr<VideoRenderer> create(int type);
 
+    virtual void init(size_t width, size_t height) = 0;
 	virtual void render() = 0;
 	virtual void updateFrame(const video_frame& frame) = 0;
-	virtual void draw(uint8_t *buffer, size_t length, size_t width, size_t height) = 0;
+	virtual void draw(uint8_t *buffer, size_t length, size_t width, size_t height, int rotation) = 0;
 	virtual bool createTextures() = 0;
 	virtual bool updateTextures() = 0;
 	virtual void deleteTextures() = 0;
@@ -42,6 +43,8 @@ protected:
 
 	size_t m_width;
 	size_t m_height;
+    size_t m_backingWidth;
+    size_t m_backingHeight;
 
 	bool isDirty;
 	bool isOrientationChanged;

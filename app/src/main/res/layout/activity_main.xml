@@ -3,19 +3,19 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.camerapreview.MainActivity">
+    android:background="@color/colorBackground"
+    tools:context="com.media.camera2glpreview.MainActivity">
 
     <FrameLayout
         android:id="@+id/preview"
         android:layout_width="1dp"
-        android:layout_height="1dp"
-        android:layout_margin="2dp" >
+        android:layout_height="1dp">
     </FrameLayout>
 
     <android.opengl.GLSurfaceView
         android:id="@+id/gl_surface_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_margin="2dp"/>
+        />
 
 </android.support.constraint.ConstraintLayout>

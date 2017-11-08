@@ -19,14 +19,10 @@ public class VideoRenderer implements GLSurfaceView.Renderer {
 
     public void init(GLSurfaceView glSurface) {
         mGLSurface = glSurface;
-        // Create an OpenGL ES 2.0 context.
-        mGLSurface.setEGLContextClientVersion(2);
+        // Create an OpenGL ES 3 context.
+        mGLSurface.setEGLContextClientVersion(3);
         mGLSurface.setRenderer(this);
         mGLSurface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-    }
-
-    public GLSurfaceView getGL() {
-        return mGLSurface;
     }
 
     public void requestRender() {
@@ -39,8 +35,8 @@ public class VideoRenderer implements GLSurfaceView.Renderer {
         destroy();
     }
 
-    public void drawVideoFrame(byte[] data, int width, int height) {
-        draw(data, width, height);
+    public void drawVideoFrame(byte[] data, int width, int height, int rotation) {
+        draw(data, width, height, rotation);
     }
 
     @Override
@@ -62,7 +58,7 @@ public class VideoRenderer implements GLSurfaceView.Renderer {
     private native void destroy();
     private native void init(int width, int height);
     private native void render();
-    private native void draw(byte[] data, int width, int height);
+    private native void draw(byte[] data, int width, int height, int rotation);
 
     static {
         System.loadLibrary("libmedia");

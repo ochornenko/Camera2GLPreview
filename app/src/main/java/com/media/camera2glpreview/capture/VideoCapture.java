@@ -2,7 +2,6 @@ package com.media.camera2glpreview.capture;
 
 import android.media.Image;
 import android.media.ImageReader;
-import android.util.Log;
 
 import java.nio.ByteBuffer;
 
@@ -11,7 +10,6 @@ import java.nio.ByteBuffer;
  */
 
 public class VideoCapture implements ImageReader.OnImageAvailableListener {
-    private static final String TAG = VideoCapture.class.toString();
 
     private PreviewFrameHandler mPreviewFrameHandler = null;
 
@@ -21,8 +19,6 @@ public class VideoCapture implements ImageReader.OnImageAvailableListener {
 
     @Override
     public void onImageAvailable(ImageReader imageReader) {
-
-        Log.i(TAG, "VCamera onImageAvailable");
 
         Image image = imageReader.acquireLatestImage();
         if (image != null) {

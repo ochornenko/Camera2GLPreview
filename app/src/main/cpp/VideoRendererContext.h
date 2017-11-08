@@ -17,8 +17,9 @@ public:
 	VideoRendererContext();
 	~VideoRendererContext();
 
+    void init(size_t width, size_t height);
 	void render();
-	void draw(uint8_t *buffer, size_t length, size_t width, size_t height);
+	void draw(uint8_t *buffer, size_t length, size_t width, size_t height, int rotation);
 
 	static void createContext(JNIEnv *env, jobject obj);
 	static void storeContext(JNIEnv *env, jobject obj, VideoRendererContext *context);

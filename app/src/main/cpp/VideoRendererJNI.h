@@ -14,7 +14,7 @@ JCMCRV(void, create)(JNIEnv * env, jobject obj);
 JCMCRV(void, destroy)(JNIEnv * env, jobject obj);
 JCMCRV(void, init)(JNIEnv * env, jobject obj,  jint width, jint height);
 JCMCRV(void, render)(JNIEnv * env, jobject obj);
-JCMCRV(void, draw)(JNIEnv * env, jobject obj, jbyteArray data, jint width, jint height);
+JCMCRV(void, draw)(JNIEnv * env, jobject obj, jbyteArray data, jint width, jint height, jint rotation);
 
 #ifdef __cplusplus
 }

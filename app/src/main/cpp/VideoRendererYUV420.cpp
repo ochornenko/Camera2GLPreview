@@ -25,10 +25,11 @@ static const char kVertexShader[] =
     "attribute vec4 position;\n"
     "attribute vec2 texcoord;\n"
 	"uniform mat4 projection;\n"
-    "uniform mat4 model_view;\n"
+    "uniform mat4 rotation;\n"
+    "uniform mat4 scale;\n"
     "void main() {\n"
     "   v_texcoord = texcoord;\n"
-    "   gl_Position = projection * model_view * position;\n"
+    "   gl_Position = projection * rotation * scale * position;\n"
     "}\n";
 
 // YUV420 to RGB conversion, pixel shader.
@@ -53,7 +54,8 @@ static const char kFragmentShader[] =
     "}\n";
 
 VideoRendererYUV420::VideoRendererYUV420()
-    : m_length(0)
+    : m_rotation(0)
+    , m_length(0)
 	, m_pDataY(nullptr)
 	, m_pDataU(nullptr)
 	, m_pDataV(nullptr)
@@ -78,15 +80,20 @@ VideoRendererYUV420::~VideoRendererYUV420()
 	deleteTextures();
 }
 
+void VideoRendererYUV420::init(size_t width, size_t height)
+{
+    m_backingWidth = width;
+    m_backingHeight = height;
+}
+
 void VideoRendererYUV420::render()
 {
-	glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	if (!updateTextures() || !useProgram()) return;
 
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    check_gl_error("glDrawArrays");
 }
 
 void VideoRendererYUV420::updateFrame(const video_frame& frame)
@@ -137,11 +144,11 @@ void VideoRendererYUV420::updateFrame(const video_frame& frame)
 
 		for (int h = 0; h < m_height / 2; h++)
         {
-			memcpy(pDstU, pSrcU, m_width/2);
-			memcpy(pDstV, pSrcV, m_width/2);
+			memcpy(pDstU, pSrcU, m_width / 2);
+			memcpy(pDstV, pSrcV, m_width / 2);
 
-			pDstU += m_width/2;
-			pDstV += m_width/2;
+			pDstU += m_width / 2;
+			pDstV += m_width / 2;
 
 			pSrcU += frame.stride_uv;
 			pSrcV += frame.stride_uv;
@@ -151,9 +158,10 @@ void VideoRendererYUV420::updateFrame(const video_frame& frame)
 	isDirty = true;
 }
 
-void VideoRendererYUV420::draw(uint8_t *buffer, size_t length, size_t width, size_t height)
+void VideoRendererYUV420::draw(uint8_t *buffer, size_t length, size_t width, size_t height, int rotation)
 {
     m_length = length;
+    m_rotation = rotation;
 
 	video_frame frame;
 	frame.width = width;
@@ -181,7 +189,11 @@ bool VideoRendererYUV420::createTextures()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, widthY, heightY, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 
-    check_gl_error("Create Y texture");
+    if (!m_texIdY)
+    {
+        check_gl_error("Create Y texture");
+        return false;
+    }
 
 	GLsizei widthU = (GLsizei)m_width / 2;
     GLsizei heightU = (GLsizei)m_height / 2;
@@ -195,7 +207,11 @@ bool VideoRendererYUV420::createTextures()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, widthU, heightU, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 
-    check_gl_error("Create U texture");
+    if (!m_texIdU)
+    {
+        check_gl_error("Create U texture");
+        return false;
+    }
 
     GLsizei widthV = (GLsizei)m_width / 2;
     GLsizei heightV = (GLsizei)m_height / 2;
@@ -209,7 +225,11 @@ bool VideoRendererYUV420::createTextures()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, widthV, heightV, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 
-    check_gl_error("Create V texture");
+    if (!m_texIdV)
+    {
+        check_gl_error("Create V texture");
+        return false;
+    }
 
 	return true;
 }
@@ -225,21 +245,15 @@ bool VideoRendererYUV420::updateTextures()
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, (GLsizei)m_width, (GLsizei)m_height, 0,
                      GL_LUMINANCE, GL_UNSIGNED_BYTE, m_pDataY.get());
 
-        check_gl_error("Update Y texture");
-
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, m_texIdU);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, (GLsizei)m_width / 2, (GLsizei)m_height / 2, 0,
                      GL_LUMINANCE, GL_UNSIGNED_BYTE, m_pDataU.get());
 
-        check_gl_error("Update U texture");
-
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, m_texIdV);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, (GLsizei)m_width / 2, (GLsizei)m_height / 2, 0,
                      GL_LUMINANCE, GL_UNSIGNED_BYTE, m_pDataV.get());
-
-        check_gl_error("Update V texture");
 
         isDirty = false;
 
@@ -257,8 +271,6 @@ void VideoRendererYUV420::deleteTextures()
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glDeleteTextures(1, &m_texIdY);
 
-        check_gl_error("Delete Y texture");
-
 		m_texIdY = 0;
 	}
 
@@ -268,8 +280,6 @@ void VideoRendererYUV420::deleteTextures()
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glDeleteTextures(1, &m_texIdU);
 
-        check_gl_error("Delete U texture");
-
 		m_texIdU = 0;
 	}
 
@@ -278,8 +288,6 @@ void VideoRendererYUV420::deleteTextures()
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glDeleteTextures(1, &m_texIdV);
-
-        check_gl_error("Delete V texture");
 
 		m_texIdV = 0;
 	}
@@ -295,20 +303,11 @@ GLuint VideoRendererYUV420::createProgram()
 	}
 
 	m_vertexPos = (GLuint)glGetAttribLocation(m_program, "position");
-    check_gl_error("glGetAttribLocation position");
-
 	m_uniformMatrix = glGetUniformLocation(m_program, "projection");
-    check_gl_error("glGetUniformLocation modelviewProj");
-
 	m_texYLoc = glGetUniformLocation(m_program, "s_textureY");
-    check_gl_error("glGetUniformLocation s_textureY");
 	m_texULoc = glGetUniformLocation(m_program, "s_textureU");
-    check_gl_error("glGetUniformLocation s_textureU");
 	m_texVLoc = glGetUniformLocation(m_program, "s_textureV");
-    check_gl_error("glGetUniformLocation s_textureV");
-
 	m_texLoc = (GLuint)glGetAttribLocation(m_program, "texcoord");
-    check_gl_error("glGetAttribLocation texcoord.");
 
 	return m_program;
 }
@@ -327,50 +326,50 @@ GLuint VideoRendererYUV420::useProgram()
 
         check_gl_error("Use program.");
 
-		// Bind parameters.
 		glVertexAttribPointer(m_vertexPos, 2, GL_FLOAT, GL_FALSE, 0, kVertices);
-        check_gl_error("glVertexAttribPointer");
 		glEnableVertexAttribArray(m_vertexPos);
-        check_gl_error("glEnableVertexAttribArray");
+
+        float aspectRatio =  (float)m_backingHeight / (float)m_backingWidth;
+        float targetAspectRatio = (float)m_height / (float)m_width;
 
 		GLfloat projection[16];
-        mat4f_load_ortho(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, projection);
+        mat4f_load_ortho(-targetAspectRatio, targetAspectRatio, -1.0f, 1.0f, -1.0f, 1.0f, projection);
 		glUniformMatrix4fv(m_uniformMatrix, 1, GL_FALSE, projection);
 
-        applyRotationZ(90);
+        float radians = m_rotation * (float)M_PI / 180.0f;
+        float s = std::sin(radians);
+        float c = std::cos(radians);
+        float zRotation[16] = {
+                c, -s, 0, 0,
+                s, c, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1 };
+
+        GLint rotationUniform = glGetUniformLocation(m_program, "rotation");
+        glUniformMatrix4fv(rotationUniform, 1, 0, &zRotation[0]);
+
+        float xScale = 1.0f;
+        float yScale = 1.0f;
+        if (targetAspectRatio > aspectRatio) yScale = (float)m_backingHeight / (float)m_height;
+        else xScale = (float)m_backingWidth / (float)m_width;
+
+        float scale[16] = {
+                xScale, 0, 0, 0,
+                0, yScale, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1 };
+
+        GLint scaleUniform = glGetUniformLocation(m_program, "scale");
+        glUniformMatrix4fv(scaleUniform, 1, 0, &scale[0]);
 
 		glUniform1i(m_texYLoc, 0);
-        check_gl_error("Set uniform s_textureY.");
-
 		glUniform1i(m_texULoc, 1);
-        check_gl_error("Set uniform s_textureU.");
-
 		glUniform1i(m_texVLoc, 2);
-        check_gl_error("Set uniform s_textureV.");
-
 		glVertexAttribPointer(m_texLoc, 2, GL_FLOAT, GL_FALSE, 0, kTextureCoords);
-        check_gl_error("glVertexAttribPointer");
 		glEnableVertexAttribArray(m_texLoc);
-        check_gl_error("glEnableVertexAttribArray");
 
 		isOrientationChanged = false;
 	}
 
 	return m_program;
-}
-
-void VideoRendererYUV420::applyRotationZ(float degrees)
-{
-    float radians = degrees * 3.14159f / 180.0f;
-    float s = std::sin(radians);
-    float c = std::cos(radians);
-    float zRotation[16] = {
-            c, -s, 0, 0,
-            s, c, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-    };
-
-    GLint modelviewUniform = glGetUniformLocation(m_program, "model_view");
-    glUniformMatrix4fv(modelviewUniform, 1, 0, &zRotation[0]);
 }

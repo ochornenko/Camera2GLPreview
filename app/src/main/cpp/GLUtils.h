@@ -1,13 +1,18 @@
 #ifndef _H_GL_UTILS_
 #define _H_GL_UTILS_
 
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
+#include <GLES3/gl3.h>
 #include <android/log.h>
 
+#define DEBUG 1
+
 #define  LOG_TAG "libmedia"
-#define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#if DEBUG
+#define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#else
+#define LOGI(...)
+#endif
 
 GLuint load_shader(GLenum shaderType, const char *pSource);
 GLuint create_program(const char *pVertexSource, const char *pFragmentSource, GLuint &vertexShader,

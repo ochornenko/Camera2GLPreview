@@ -26,6 +26,7 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
     private static final String FRAGMENT_DIALOG = "dialog";
 
     private VideoRenderer mVideoRenderer;
+    private VideoCameraPreview mPreview;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -42,7 +43,7 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
 
         mVideoRenderer.init(glSurfaceView);
 
-        VideoCameraPreview mPreview = new VideoCameraPreview(this);
+        mPreview = new VideoCameraPreview(this);
         ((FrameLayout) findViewById(R.id.preview)).addView(mPreview);
     }
 
@@ -56,7 +57,8 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
     @Override
     public void onPreviewFrame(byte[] data, int width, int height) {
 
-        mVideoRenderer.drawVideoFrame(data, width, height);
+        Integer rotation = mPreview.getSensorOrientation();
+        mVideoRenderer.drawVideoFrame(data, width, height, rotation);
         mVideoRenderer.requestRender();
     }
 

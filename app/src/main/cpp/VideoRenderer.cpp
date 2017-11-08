@@ -7,6 +7,8 @@ VideoRenderer::VideoRenderer()
 	, m_pixelShader(0)
 	, m_width(0)
 	, m_height(0)
+	, m_backingWidth(0)
+	, m_backingHeight(0)
 	, isDirty(false)
 	, isOrientationChanged(false)
 {
