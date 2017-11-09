@@ -18,6 +18,9 @@ GLuint load_shader(GLenum shaderType, const char *pSource);
 GLuint create_program(const char *pVertexSource, const char *pFragmentSource, GLuint &vertexShader,
                       GLuint &pixelShader);
 void check_gl_error(const char *op);
-void mat4f_load_ortho(float left, float right, float bottom, float top, float near, float far, float* mout);
+void mat4f_load_ortho(float left, float right, float bottom, float top, float near, float far, float* mat4f);
+void mat4f_load_rotation_z(int rotation, float* mat4f);
+void mat4f_load_scale(float scaleX, float scaleY, float scaleZ, float* mat4f);
+float aspect_ratio_correction(bool fillScreen, size_t backingWidth, size_t backingHeight, size_t width, size_t height);
 
 #endif // _H_GL_UTILS_

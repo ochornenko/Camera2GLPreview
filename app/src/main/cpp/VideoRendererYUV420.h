@@ -20,27 +20,30 @@ public:
 	virtual GLuint useProgram() override;
 
 private:
-    int m_rotation;
-    size_t m_length;
-
 	std::unique_ptr<uint8_t[]> m_pDataY;
-    std::unique_ptr<uint8_t[]> m_pDataU;
-    std::unique_ptr<uint8_t[]> m_pDataV;
 
+    uint8_t * m_pDataU;
+    uint8_t * m_pDataV;
+
+    size_t m_length;
 	size_t m_sizeY;
     size_t m_sizeU;
     size_t m_sizeV;
 
-	GLuint m_texIdY;
-	GLuint m_texIdU;
-	GLuint m_texIdV;
+	GLuint m_textureIdY;
+	GLuint m_textureIdU;
+	GLuint m_textureIdV;
 
 	GLuint m_vertexPos;
-    GLuint m_texLoc;
-	GLint m_texYLoc;
-	GLint m_texULoc;
-	GLint m_texVLoc;
-	GLint m_uniformMatrix;
+    GLuint m_textureLoc;
+	GLint m_textureYLoc;
+	GLint m_textureULoc;
+	GLint m_textureVLoc;
+	GLint m_uniformProjection;
+	GLint m_uniformRotation;
+    GLint m_uniformScale;
+
+    int m_rotation;
 };
 
 #endif // _H_VIDEO_RENDER_YUV_

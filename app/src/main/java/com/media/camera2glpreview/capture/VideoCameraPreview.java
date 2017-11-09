@@ -219,7 +219,7 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
                 } else {
                     Log.e(TAG, "captureRequest is null");
                 }
-            } catch (CameraAccessException e){
+            } catch (CameraAccessException e) {
                 Log.e(TAG, "onConfigured " + e.toString());
             }
         }
