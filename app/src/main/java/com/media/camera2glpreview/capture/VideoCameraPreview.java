@@ -59,7 +59,7 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
     }
 
     public void surfaceDestroyed(SurfaceHolder holder) {
-        closeCamera();
+        
     }
 
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
@@ -75,15 +75,13 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
     /**
      * Opens the camera specified by {@link VideoCameraPreview#}.
      */
-    private void openCamera() {
+    public void openCamera() {
         if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
             return;
         }
 
         Log.i(TAG, "openCamera");
-
-        startBackgroundThread();
 
         CameraManager manager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
         try {
@@ -103,7 +101,7 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
             }
             manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
         } catch (CameraAccessException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Cannot access the camera." + e.toString());
         } catch (InterruptedException e) {
             throw new RuntimeException("Interrupted while trying to lock camera opening.", e);
         }
@@ -112,7 +110,7 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
     /**
      * Closes the current {@link CameraDevice}.
      */
-    private void closeCamera() {
+    public void closeCamera() {
         try {
             mCameraOpenCloseLock.acquire();
             if (null != mCaptureSession) {
@@ -127,7 +125,6 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
             throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
         } finally {
             mCameraOpenCloseLock.release();
-            stopBackgroundThread();
         }
 
         Log.i(TAG, "closeCamera");
@@ -136,7 +133,7 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
     /**
      * Starts a background thread and its {@link Handler}.
      */
-    private void startBackgroundThread() {
+    public void startBackgroundThread() {
         mBackgroundThread = new HandlerThread("CameraBackground");
         mBackgroundThread.start();
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
@@ -145,7 +142,7 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
     /**
      * Stops the background thread and its {@link Handler}.
      */
-    private void stopBackgroundThread() {
+    public void stopBackgroundThread() {
         mBackgroundThread.quitSafely();
         try {
             mBackgroundThread.join();
@@ -197,6 +194,7 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
 
     private void createCaptureSession() {
         try {
+            if (null == mCameraDevice || null == mImageReader) return;
             mCameraDevice.createCaptureSession(Collections.singletonList(mImageReader.getSurface()),
                     sessionStateCallback, mBackgroundHandler);
 
