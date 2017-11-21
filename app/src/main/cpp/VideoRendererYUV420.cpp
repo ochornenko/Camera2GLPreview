@@ -1,5 +1,7 @@
 #include "VideoRendererYUV420.h"
 
+#include <cstring>
+
 // Vertices for a full screen quad.
 static const float kVertices[8] = {
   -1.f, 1.f,
