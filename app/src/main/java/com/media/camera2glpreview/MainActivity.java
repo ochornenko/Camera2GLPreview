@@ -4,13 +4,13 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.widget.FrameLayout;
 
@@ -87,7 +87,7 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
                     if (result != PackageManager.PERMISSION_GRANTED) {
                         if (null == errorDialog || errorDialog.isHidden()) {
                             errorDialog = ErrorDialog.newInstance(getString(R.string.request_permission));
-                            errorDialog.show(getFragmentManager(), FRAGMENT_DIALOG);
+                            errorDialog.show(getSupportFragmentManager(), FRAGMENT_DIALOG);
                         }
                         break;
                     } else {
@@ -112,7 +112,7 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
 
     private void requestCameraPermission() {
         if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
-            new ConfirmationDialog().show(getFragmentManager(), FRAGMENT_DIALOG);
+            new ConfirmationDialog().show(getSupportFragmentManager(), FRAGMENT_DIALOG);
         } else {
             requestPermissions(CAMERA_PERMISSIONS, REQUEST_CAMERA_PERMISSION);
         }
@@ -161,7 +161,7 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            ActivityCompat.requestPermissions(getActivity(), CAMERA_PERMISSIONS,
+                            ActivityCompat.requestPermissions(activity, CAMERA_PERMISSIONS,
                                     REQUEST_CAMERA_PERMISSION);
                         }
                     })
