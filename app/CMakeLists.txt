@@ -22,6 +22,7 @@ add_library( # Sets the name of the library.
              src/main/cpp/GLUtils.cpp
              src/main/cpp/VideoRenderer.cpp
              src/main/cpp/VideoRendererYUV420.cpp
+             src/main/cpp/VideoRendererYUV420Filter.cpp
              src/main/cpp/VideoRendererContext.cpp
              src/main/cpp/VideoRendererJNI.cpp )
 

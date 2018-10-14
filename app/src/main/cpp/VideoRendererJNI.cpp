@@ -37,3 +37,19 @@ JCMCRV(void, draw)(JNIEnv * env, jobject obj, jbyteArray data, jint width, jint 
 
 	env->ReleaseByteArrayElements(data, bufferPtr, 0);
 }
+
+JCMCRV(void, applyFilter)(JNIEnv * env, jobject obj, jint filter)
+{
+	VideoRendererContext* context = VideoRendererContext::getContext(env, obj);
+
+	if (context) context->applyFilter(filter);
+}
+
+JCMCRV(jint, getMaxFilter)(JNIEnv * env, jobject obj)
+{
+	VideoRendererContext* context = VideoRendererContext::getContext(env, obj);
+
+	if (context) return context->getMaxFilter();
+
+	return 0;
+}

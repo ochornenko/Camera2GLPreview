@@ -15,6 +15,8 @@ JCMCRV(void, destroy)(JNIEnv * env, jobject obj);
 JCMCRV(void, init)(JNIEnv * env, jobject obj,  jint width, jint height);
 JCMCRV(void, render)(JNIEnv * env, jobject obj);
 JCMCRV(void, draw)(JNIEnv * env, jobject obj, jbyteArray data, jint width, jint height, jint rotation);
+JCMCRV(void, applyFilter)(JNIEnv * env, jobject obj, jint filter);
+JCMCRV(jint, getMaxFilter)(JNIEnv * env, jobject obj);
 
 #ifdef __cplusplus
 }

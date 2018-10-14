@@ -19,8 +19,8 @@ public class VideoRenderer implements GLSurfaceView.Renderer {
 
     public void init(GLSurfaceView glSurface) {
         mGLSurface = glSurface;
-        // Create an OpenGL ES 3 context.
-        mGLSurface.setEGLContextClientVersion(3);
+        // Create an OpenGL ES 2 context.
+        mGLSurface.setEGLContextClientVersion(2);
         mGLSurface.setRenderer(this);
         mGLSurface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
@@ -37,6 +37,14 @@ public class VideoRenderer implements GLSurfaceView.Renderer {
 
     public void drawVideoFrame(byte[] data, int width, int height, int rotation) {
         draw(data, width, height, rotation);
+    }
+
+    public void applyVideoFilter(int filter) {
+        applyFilter(filter);
+    }
+
+    public int getMaxVideoFilter() {
+        return getMaxFilter();
     }
 
     @Override
@@ -59,6 +67,8 @@ public class VideoRenderer implements GLSurfaceView.Renderer {
     private native void init(int width, int height);
     private native void render();
     private native void draw(byte[] data, int width, int height, int rotation);
+    private native void applyFilter(int filter);
+    private native int getMaxFilter();
 
     static {
         System.loadLibrary("libmedia");

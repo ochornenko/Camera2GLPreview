@@ -60,6 +60,13 @@ GLuint create_program(const char *pVertexSource, const char *pFragmentSource, GL
         glLinkProgram(program);
         GLint linkStatus = GL_FALSE;
         glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
+
+        glDetachShader(program, vertexShader);
+        glDeleteShader(vertexShader);
+        vertexShader = 0;
+        glDetachShader(program, pixelShader);
+        glDeleteShader(pixelShader);
+        pixelShader = 0;
         if (linkStatus != GL_TRUE)
         {
             GLint bufLength = 0;
@@ -75,19 +82,21 @@ GLuint create_program(const char *pVertexSource, const char *pFragmentSource, GL
                 }
             }
 
-            glDetachShader(program, vertexShader);
-            glDeleteShader(vertexShader);
-            vertexShader = 0;
-
-            glDetachShader(program, pixelShader);
-            glDeleteShader(pixelShader);
-            pixelShader = 0;
-
             glDeleteProgram(program);
             program = 0;
         }
     }
     return program;
+}
+
+void delete_program(GLuint &program)
+{
+    if (program)
+    {
+        glUseProgram(0);
+        glDeleteProgram(program);
+        program = 0;
+    }
 }
 
 void mat4f_load_ortho(float left, float right, float bottom, float top, float near, float far, float* mat4f)

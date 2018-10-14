@@ -1,6 +1,5 @@
 #include "VideoRendererYUV420.h"
-
-#include <cstring>
+#include "GLShaders.h"
 
 // Vertices for a full screen quad.
 static const float kVertices[8] = {
@@ -17,41 +16,6 @@ static const float kTextureCoords[8] = {
   1, 0,
   1, 1
 };
-
-// Vertex shader.
-static const char kVertexShader[] =
-    "#version 100\n"
-    "varying vec2 v_texcoord;\n"
-    "attribute vec4 position;\n"
-    "attribute vec2 texcoord;\n"
-	"uniform mat4 projection;\n"
-    "uniform mat4 rotation;\n"
-    "uniform mat4 scale;\n"
-    "void main() {\n"
-    "   v_texcoord = texcoord;\n"
-    "   gl_Position = projection * rotation * scale * position;\n"
-    "}\n";
-
-// YUV420 to RGB conversion, pixel shader.
-static const char kFragmentShader[] =
-    "#version 100\n"
-    "precision highp float;"
-    "varying vec2 v_texcoord;\n"
-    "uniform lowp sampler2D s_textureY;\n"
-    "uniform lowp sampler2D s_textureU;\n"
-    "uniform lowp sampler2D s_textureV;\n"
-    "void main() {\n"
-    "   float y, u, v, r, g, b;\n"
-    "   y = texture2D(s_textureY, v_texcoord).r;\n"
-    "   u = texture2D(s_textureU, v_texcoord).r;\n"
-    "   v = texture2D(s_textureV, v_texcoord).r;\n"
-    "   u = u - 0.5;\n"
-    "   v = v - 0.5;\n"
-    "   r = y + 1.403 * v;\n"
-    "   g = y - 0.344 * u - 0.714 * v;\n"
-    "   b = y + 1.770 * u;\n"
-    "   gl_FragColor = vec4(r, g, b, 1.0);\n"
-    "}\n";
 
 VideoRendererYUV420::VideoRendererYUV420()
     : m_pDataY(nullptr)
@@ -75,12 +39,13 @@ VideoRendererYUV420::VideoRendererYUV420()
     , m_rotation(0)
 
 {
-	isOrientationChanged = true;
+	isProgramChanged = true;
 }
 
 VideoRendererYUV420::~VideoRendererYUV420()
 {
 	deleteTextures();
+	delete_program(m_program);
 }
 
 void VideoRendererYUV420::init(size_t width, size_t height)
@@ -176,6 +141,15 @@ void VideoRendererYUV420::draw(uint8_t *buffer, size_t length, size_t width, siz
 	frame.v = buffer + width * height * 5 / 4;
 
 	updateFrame(frame);
+}
+
+void VideoRendererYUV420::applyFilter(int filter)
+{
+}
+
+int VideoRendererYUV420::getMaxFilter()
+{
+    return 0;
 }
 
 bool VideoRendererYUV420::createTextures()
@@ -296,9 +270,9 @@ void VideoRendererYUV420::deleteTextures()
 	}
 }
 
-GLuint VideoRendererYUV420::createProgram()
+GLuint VideoRendererYUV420::createProgram(const char *pVertexSource, const char *pFragmentSource)
 {
-	m_program = ::create_program(kVertexShader, kFragmentShader, m_vertexShader, m_pixelShader);
+	m_program = create_program(pVertexSource, pFragmentSource, m_vertexShader, m_pixelShader);
 
 	if (!m_program)
     {
@@ -321,13 +295,13 @@ GLuint VideoRendererYUV420::createProgram()
 
 GLuint VideoRendererYUV420::useProgram()
 {
-	if (!m_program && !createProgram())
+	if (!m_program && !createProgram(kVertexShader, kFragmentShader))
     {
 		LOGE("Could not use program.");
 		return 0;
 	}
 
-	if (isOrientationChanged)
+	if (isProgramChanged)
     {
 		glUseProgram(m_program);
 
@@ -358,7 +332,7 @@ GLuint VideoRendererYUV420::useProgram()
 		glVertexAttribPointer(m_textureLoc, 2, GL_FLOAT, GL_FALSE, 0, kTextureCoords);
 		glEnableVertexAttribArray(m_textureLoc);
 
-		isOrientationChanged = false;
+		isProgramChanged = false;
 	}
 
 	return m_program;

@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <memory>
 
-enum { tYUV420 };
+enum { tYUV420, tYUV420_FILTER };
 
 struct video_frame
 {
@@ -30,10 +30,12 @@ public:
 	virtual void render() = 0;
 	virtual void updateFrame(const video_frame& frame) = 0;
 	virtual void draw(uint8_t *buffer, size_t length, size_t width, size_t height, int rotation) = 0;
+	virtual void applyFilter(int filter) = 0;
+	virtual int getMaxFilter() = 0;
 	virtual bool createTextures() = 0;
 	virtual bool updateTextures() = 0;
 	virtual void deleteTextures() = 0;
-	virtual GLuint createProgram() = 0;
+	virtual GLuint createProgram(const char *pVertexSource, const char *pFragmentSource) = 0;
 	virtual GLuint useProgram() = 0;
 
 protected:
@@ -47,7 +49,7 @@ protected:
     size_t m_backingHeight;
 
 	bool isDirty;
-	bool isOrientationChanged;
+	bool isProgramChanged;
 };
 
 #endif // _H_VIDEO_RENDERER_

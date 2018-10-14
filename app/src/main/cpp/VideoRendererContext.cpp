@@ -4,7 +4,7 @@ VideoRendererContext::jni_fields_t VideoRendererContext::jni_fields = { 0L };
 
 VideoRendererContext::VideoRendererContext()
 {
-    m_pVideoRenderer = VideoRenderer::create(tYUV420);
+    m_pVideoRenderer = VideoRenderer::create(tYUV420_FILTER);
 }
 
 VideoRendererContext::~VideoRendererContext()
@@ -25,6 +25,16 @@ void VideoRendererContext::render()
 void VideoRendererContext::draw(uint8_t *buffer, size_t length, size_t width, size_t height, int rotation)
 {
     m_pVideoRenderer->draw(buffer, length, width, height, rotation);
+}
+
+void VideoRendererContext::applyFilter(int filter)
+{
+    m_pVideoRenderer->applyFilter(filter);
+}
+
+int VideoRendererContext::getMaxFilter()
+{
+    return m_pVideoRenderer->getMaxFilter();
 }
 
 void VideoRendererContext::createContext(JNIEnv *env, jobject obj)

@@ -1,5 +1,6 @@
 #include "VideoRenderer.h"
 #include "VideoRendererYUV420.h"
+#include "VideoRendererYUV420Filter.h"
 
 VideoRenderer::VideoRenderer()
 	: m_program(0)
@@ -10,38 +11,22 @@ VideoRenderer::VideoRenderer()
 	, m_backingWidth(0)
 	, m_backingHeight(0)
 	, isDirty(false)
-	, isOrientationChanged(false)
+	, isProgramChanged(false)
 {
 
 }
 
 VideoRenderer::~VideoRenderer()
 {
-	if (m_vertexShader)
-    {
-		glDetachShader(m_program, m_vertexShader);
-		glDeleteShader(m_vertexShader);
-		m_vertexShader = 0;
-
-	}
-	if (m_pixelShader)
-    {
-		glDetachShader(m_program, m_pixelShader);
-		glDeleteShader(m_pixelShader);
-		m_pixelShader = 0;
-
-	}
-	if (m_program)
-    {
-		glDeleteProgram(m_program);
-		m_program = 0;
-	}
+    delete_program(m_program);
 }
 
 std::unique_ptr<VideoRenderer> VideoRenderer::create(int type)
 {
 	switch(type)
     {
+		case tYUV420_FILTER:
+			return std::unique_ptr<VideoRenderer>(std::make_unique<VideoRendererYUV420Filter>());
 		case tYUV420:
 		default:
 			return std::unique_ptr<VideoRenderer>(std::make_unique<VideoRendererYUV420>());

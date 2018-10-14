@@ -13,10 +13,12 @@ public:
 	virtual void render() override;
 	virtual void updateFrame(const video_frame& frame) override;
 	virtual void draw(uint8_t *buffer, size_t length, size_t width, size_t height, int rotation) override;
+	virtual void applyFilter(int filter) override;
+    virtual int getMaxFilter() override;
 	virtual bool createTextures() override;
 	virtual bool updateTextures() override;
 	virtual void deleteTextures() override;
-	virtual GLuint createProgram() override;
+	virtual GLuint createProgram(const char *pVertexSource, const char *pFragmentSource) override;
 	virtual GLuint useProgram() override;
 
 private:
