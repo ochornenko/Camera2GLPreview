@@ -63,9 +63,11 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
     }
 
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
-        mImageReader = ImageReader.newInstance(640, 480, ImageFormat.YUV_420_888, 2);
-        mImageReader.setOnImageAvailableListener(mVideoCapture, mBackgroundHandler);
-        openCamera();
+        if (null == mImageReader) {
+            mImageReader = ImageReader.newInstance(640, 480, ImageFormat.YUV_420_888, 2);
+            mImageReader.setOnImageAvailableListener(mVideoCapture, mBackgroundHandler);
+            openCamera();
+        }
     }
 
     public Integer getSensorOrientation() {
@@ -121,6 +123,10 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
                 mCameraDevice.close();
                 mCameraDevice = null;
             }
+            if (null != mImageReader) {
+                mImageReader.close();
+                mImageReader = null;
+            }
         } catch (InterruptedException e) {
             throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
         } finally {
@@ -154,6 +160,7 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
     }
 
     private CaptureRequest createCaptureRequest() {
+        if (null == mCameraDevice) return null;
         try {
             CaptureRequest.Builder builder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
             builder.addTarget(mImageReader.getSurface());

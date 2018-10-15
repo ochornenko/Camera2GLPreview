@@ -13,6 +13,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.view.MotionEvent;
+import android.view.View;
 import android.widget.FrameLayout;
 
 import com.media.camera2glpreview.capture.PreviewFrameHandler;
@@ -67,7 +68,7 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
             requestCameraPermission();
         } else {
             mPreview.startBackgroundThread();
-            mPreview.openCamera();
+            mPreview.setVisibility(View.VISIBLE);
         }
     }
 
@@ -76,6 +77,7 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
         if (hasPermissionsGranted(CAMERA_PERMISSIONS)) {
             mPreview.closeCamera();
             mPreview.stopBackgroundThread();
+            mPreview.setVisibility(View.GONE);
         }
         super.onPause();
     }
