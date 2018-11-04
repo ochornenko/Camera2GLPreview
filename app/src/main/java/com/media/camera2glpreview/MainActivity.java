@@ -65,6 +65,7 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
     public void onResume() {
         super.onResume();
         if (!hasPermissionsGranted(CAMERA_PERMISSIONS)) {
+            mPreview.setVisibility(View.GONE);
             requestCameraPermission();
         } else {
             mPreview.startBackgroundThread();
@@ -102,7 +103,12 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
                         }
                         break;
                     } else {
-                        if (null != errorDialog) errorDialog.dismiss();
+                        if (null != errorDialog) {
+                            errorDialog.dismiss();
+                        } else {
+                            mPreview.startBackgroundThread();
+                            mPreview.setVisibility(View.VISIBLE);
+                        }
                     }
                 }
             }
