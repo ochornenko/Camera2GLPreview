@@ -1,15 +1,14 @@
 #include "VideoRenderer.h"
-#include "VideoRendererYUV420.h"
-#include "VideoRendererYUV420Filter.h"
+#include "GLVideoRendererYUV420.h"
+#include "VKVideoRendererYUV420.h"
+#include "GLVideoRendererYUV420Filter.h"
 
 VideoRenderer::VideoRenderer()
-	: m_program(0)
-	, m_vertexShader(0)
-	, m_pixelShader(0)
-	, m_width(0)
+	: m_width(0)
 	, m_height(0)
 	, m_backingWidth(0)
 	, m_backingHeight(0)
+	, m_rotation(0)
 	, isDirty(false)
 	, isProgramChanged(false)
 {
@@ -18,7 +17,7 @@ VideoRenderer::VideoRenderer()
 
 VideoRenderer::~VideoRenderer()
 {
-    delete_program(m_program);
+
 }
 
 std::unique_ptr<VideoRenderer> VideoRenderer::create(int type)
@@ -26,9 +25,11 @@ std::unique_ptr<VideoRenderer> VideoRenderer::create(int type)
 	switch(type)
     {
 		case tYUV420_FILTER:
-			return std::unique_ptr<VideoRenderer>(std::make_unique<VideoRendererYUV420Filter>());
+			return std::unique_ptr<VideoRenderer>(std::make_unique<GLVideoRendererYUV420Filter>());
+		case tVK_YUV420:
+			return std::unique_ptr<VideoRenderer>(std::make_unique<VKVideoRendererYUV420>());
 		case tYUV420:
 		default:
-			return std::unique_ptr<VideoRenderer>(std::make_unique<VideoRendererYUV420>());
+			return std::unique_ptr<VideoRenderer>(std::make_unique<GLVideoRendererYUV420>());
 	}
 }

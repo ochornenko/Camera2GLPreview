@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
@@ -21,7 +22,7 @@ import com.media.camera2glpreview.capture.VideoCameraPreview;
 import com.media.camera2glpreview.gesture.SimpleGestureFilter;
 import com.media.camera2glpreview.gesture.SimpleGestureFilter.SimpleGestureListener;
 import com.media.camera2glpreview.gesture.SimpleGestureFilter.SwipeDirection;
-import com.media.camera2glpreview.render.VideoRenderer;
+import com.media.camera2glpreview.render.GLVideoRenderer;
 
 public class MainActivity extends FragmentActivity implements PreviewFrameHandler, SimpleGestureListener,
         ActivityCompat.OnRequestPermissionsResultCallback {
@@ -32,7 +33,7 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
             Manifest.permission.CAMERA
     };
 
-    private VideoRenderer mVideoRenderer;
+    private GLVideoRenderer mVideoRenderer;
     private VideoCameraPreview mPreview;
     private SimpleGestureFilter mDetector;
     private ErrorDialog errorDialog;
@@ -43,7 +44,7 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mVideoRenderer = new VideoRenderer();
+        mVideoRenderer = new GLVideoRenderer();
         GLSurfaceView glSurfaceView = findViewById(R.id.gl_surface_view);
 
         mVideoRenderer.init(glSurfaceView);
@@ -149,6 +150,9 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
                 if (mFilter > 0) {
                     mFilter--;
                     mVideoRenderer.applyVideoFilter(mFilter);
+                } else {
+                    Intent intent = new Intent(this, VKActivity.class);
+                    startActivity(intent);
                 }
                 break;
             case SWIPE_LEFT:

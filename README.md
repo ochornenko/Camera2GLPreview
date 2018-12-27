@@ -1,8 +1,14 @@
 # Camera2 Preview
 
-Android camera preview application using Camera2 API. Capturing is implemented in Java but rendering in C++ with OpenGL ES using NDK and JNI.
+Android camera preview application using Camera2 API. Capturing is implemented in Java but rendering in C++ with OpenGL ES/Vulkan using NDK and JNI.
 
-- Realtime camera filters. Processing video frames in GLSL Shaders to apply filtes. Swipe left or right to change filter.
+- Rendering video using GLSL Shaders with OpenGL ES/Vulkan. App starts with OpenGL ES renderer, swipe left initially to use Vulkan renderer.
+- Realtime camera filters. Processing video frames in GLSL Shaders (OpenGL ES) to apply filtes. Swipe right to change filter.
+
+<br />
+<p align="center">
+<img src="/screenshots/camera-preview.gif?raw=true" width="400px">
+</p>
 
 ## License
 

@@ -1,5 +1,5 @@
-#ifndef _H_GL_SHADER_H_
-#define _H_GL_SHADER_H_
+#ifndef _GL_SHADER_H_
+#define _GL_SHADER_H_
 
 // Vertex shader.
 static const char kVertexShader[] =
@@ -465,4 +465,4 @@ static const char kFragmentShader12[] =
         gl_FragColor = color;\
     }";
 
-#endif //_H_GL_SHADER_H_
+#endif //_GL_SHADER_H_

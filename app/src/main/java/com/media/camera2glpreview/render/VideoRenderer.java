@@ -1,76 +1,36 @@
 package com.media.camera2glpreview.render;
 
-import android.opengl.GLSurfaceView;
-
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
+import android.view.Surface;
 
 /**
  * Created by oleg on 11/2/17.
  */
 
-public class VideoRenderer implements GLSurfaceView.Renderer {
-    private long mNativeContext; // using by native
-    private GLSurfaceView mGLSurface;
+public abstract class VideoRenderer {
+    protected enum Type {
+        GL_YUV420(0), VK_YUV420(1), GL_YUV420_FILTER(2);
 
-    public VideoRenderer() {
-        create();
-    }
+        private int mValue;
 
-    public void init(GLSurfaceView glSurface) {
-        mGLSurface = glSurface;
-        // Create an OpenGL ES 2 context.
-        mGLSurface.setEGLContextClientVersion(2);
-        mGLSurface.setRenderer(this);
-        mGLSurface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-    }
+        Type(int value) {
+            mValue = value;
+        }
 
-    public void requestRender() {
-        if (mGLSurface != null) {
-            mGLSurface.requestRender();
+        public int getValue() {
+            return mValue;
         }
     }
+    private long mNativeContext; // using by native
 
-    public void destroyRender() {
-        destroy();
-    }
-
-    public void drawVideoFrame(byte[] data, int width, int height, int rotation) {
-        draw(data, width, height, rotation);
-    }
-
-    public void applyVideoFilter(int filter) {
-        applyFilter(filter);
-    }
-
-    public int getMaxVideoFilter() {
-        return getMaxFilter();
-    }
-
-    @Override
-    public void onDrawFrame(GL10 gl) {
-        render();
-    }
-
-    @Override
-    public void onSurfaceChanged(GL10 gl, int width, int height) {
-        init(width, height);
-    }
-
-    @Override
-    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-
-    }
-
-    private native void create();
-    private native void destroy();
-    private native void init(int width, int height);
-    private native void render();
-    private native void draw(byte[] data, int width, int height, int rotation);
-    private native void applyFilter(int filter);
-    private native int getMaxFilter();
+    protected native void create(int type);
+    protected native void destroy();
+    protected native void init(Surface surface, int width, int height);
+    protected native void render();
+    protected native void draw(byte[] data, int width, int height, int rotation);
+    protected native void applyFilter(int filter);
+    protected native int getMaxFilter();
 
     static {
-        System.loadLibrary("libmedia");
+        System.loadLibrary("media-lib");
     }
 }

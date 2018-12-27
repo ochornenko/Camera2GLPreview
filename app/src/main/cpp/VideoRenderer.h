@@ -1,12 +1,11 @@
 #ifndef _H_VIDEO_RENDERER_
 #define _H_VIDEO_RENDERER_
 
-#include "GLUtils.h"
-
 #include <stdint.h>
 #include <memory>
+#include <android/native_window.h>
 
-enum { tYUV420, tYUV420_FILTER };
+enum { tYUV420, tVK_YUV420, tYUV420_FILTER };
 
 struct video_frame
 {
@@ -26,7 +25,7 @@ public:
 
     static std::unique_ptr<VideoRenderer> create(int type);
 
-    virtual void init(size_t width, size_t height) = 0;
+    virtual void init(ANativeWindow* window, size_t width, size_t height) = 0;
 	virtual void render() = 0;
 	virtual void updateFrame(const video_frame& frame) = 0;
 	virtual void draw(uint8_t *buffer, size_t length, size_t width, size_t height, int rotation) = 0;
@@ -35,18 +34,14 @@ public:
 	virtual bool createTextures() = 0;
 	virtual bool updateTextures() = 0;
 	virtual void deleteTextures() = 0;
-	virtual GLuint createProgram(const char *pVertexSource, const char *pFragmentSource) = 0;
-	virtual GLuint useProgram() = 0;
+	virtual int createProgram(const char *pVertexSource, const char *pFragmentSource) = 0;
 
 protected:
-	GLuint m_program;
-	GLuint m_vertexShader;
-	GLuint m_pixelShader;
-
 	size_t m_width;
 	size_t m_height;
     size_t m_backingWidth;
     size_t m_backingHeight;
+	int m_rotation;
 
 	bool isDirty;
 	bool isProgramChanged;

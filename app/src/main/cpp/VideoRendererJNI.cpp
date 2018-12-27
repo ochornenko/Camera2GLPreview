@@ -1,9 +1,11 @@
 #include "VideoRendererJNI.h"
 #include "VideoRendererContext.h"
 
-JCMCRV(void, create)(JNIEnv * env, jobject obj)
+#include <android/native_window_jni.h>
+
+JCMCRV(void, create)(JNIEnv * env, jobject obj, jint type)
 {
-    VideoRendererContext::createContext(env, obj);
+    VideoRendererContext::createContext(env, obj, type);
 }
 
 JCMCRV(void, destroy)(JNIEnv * env, jobject obj)
@@ -11,11 +13,13 @@ JCMCRV(void, destroy)(JNIEnv * env, jobject obj)
     VideoRendererContext::deleteContext(env, obj);
 }
 
-JCMCRV(void, init)(JNIEnv * env, jobject obj,  jint width, jint height)
+JCMCRV(void, init)(JNIEnv * env, jobject obj, jobject surface, jint width, jint height)
 {
     VideoRendererContext* context = VideoRendererContext::getContext(env, obj);
 
-    if (context) context->init((size_t)width, (size_t)height);
+	ANativeWindow *window = surface ? ANativeWindow_fromSurface(env, surface) : nullptr;
+
+    if (context) context->init(window, (size_t)width, (size_t)height);
 }
 
 JCMCRV(void, render)(JNIEnv * env, jobject obj)

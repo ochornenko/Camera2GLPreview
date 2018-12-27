@@ -10,9 +10,9 @@ extern "C" {
 #define JCMCRV(rettype, name)                                             \
   rettype JNIEXPORT JNICALL Java_com_media_camera2glpreview_render_VideoRenderer_##name
 
-JCMCRV(void, create)(JNIEnv * env, jobject obj);
+JCMCRV(void, create)(JNIEnv * env, jobject obj, jint type);
 JCMCRV(void, destroy)(JNIEnv * env, jobject obj);
-JCMCRV(void, init)(JNIEnv * env, jobject obj,  jint width, jint height);
+JCMCRV(void, init)(JNIEnv * env, jobject obj, jobject surface, jint width, jint height);
 JCMCRV(void, render)(JNIEnv * env, jobject obj);
 JCMCRV(void, draw)(JNIEnv * env, jobject obj, jbyteArray data, jint width, jint height, jint rotation);
 JCMCRV(void, applyFilter)(JNIEnv * env, jobject obj, jint filter);

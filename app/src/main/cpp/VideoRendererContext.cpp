@@ -1,10 +1,11 @@
 #include "VideoRendererContext.h"
+#include "Log.h"
 
 VideoRendererContext::jni_fields_t VideoRendererContext::jni_fields = { 0L };
 
-VideoRendererContext::VideoRendererContext()
+VideoRendererContext::VideoRendererContext(int type)
 {
-    m_pVideoRenderer = VideoRenderer::create(tYUV420_FILTER);
+    m_pVideoRenderer = VideoRenderer::create(type);
 }
 
 VideoRendererContext::~VideoRendererContext()
@@ -12,9 +13,9 @@ VideoRendererContext::~VideoRendererContext()
 
 }
 
-void VideoRendererContext::init(size_t width, size_t height)
+void VideoRendererContext::init(ANativeWindow* window, size_t width, size_t height)
 {
-    m_pVideoRenderer->init(width, height);
+    m_pVideoRenderer->init(window, width, height);
 }
 
 void VideoRendererContext::render()
@@ -37,9 +38,9 @@ int VideoRendererContext::getMaxFilter()
     return m_pVideoRenderer->getMaxFilter();
 }
 
-void VideoRendererContext::createContext(JNIEnv *env, jobject obj)
+void VideoRendererContext::createContext(JNIEnv *env, jobject obj, jint type)
 {
-    VideoRendererContext* context = new VideoRendererContext();
+    VideoRendererContext* context = new VideoRendererContext(type);
 
     storeContext(env, obj, context);
 }

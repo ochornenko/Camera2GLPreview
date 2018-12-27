@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
 
 public class VideoCapture implements ImageReader.OnImageAvailableListener {
 
-    private PreviewFrameHandler mPreviewFrameHandler = null;
+    private PreviewFrameHandler mPreviewFrameHandler;
 
     public VideoCapture(PreviewFrameHandler frameHandler) {
         mPreviewFrameHandler = frameHandler;
