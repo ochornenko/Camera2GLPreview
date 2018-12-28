@@ -223,8 +223,7 @@ void VKVideoRendererYUV420::createDevice(ANativeWindow* platformWindow, VkApplic
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         .pNext = nullptr,
         .pApplicationInfo = appInfo,
-        .enabledExtensionCount =
-        static_cast<uint32_t>(instance_extensions.size()),
+        .enabledExtensionCount = static_cast<uint32_t>(instance_extensions.size()),
         .ppEnabledExtensionNames = instance_extensions.data(),
         .enabledLayerCount = 0,
         .ppEnabledLayerNames = nullptr,
@@ -963,19 +962,19 @@ void VKVideoRendererYUV420::createUniformBuffers()
     vkFreeMemory(m_deviceInfo.device, stagingBufferMemory, nullptr);
 }
 
-void VKVideoRendererYUV420::createVertexBuffer() {
-
-    std::vector<Vertex> vertices {
-            { {  1.0f,  1.0f, 0.0f }, { 1.0f, 1.0f } },
-            { { -1.0f,  1.0f, 0.0f }, { 0.0f, 1.0f } },
-            { { -1.0f, -1.0f, 0.0f }, { 0.0f, 0.0f } },
-            { {  1.0f, -1.0f, 0.0f }, { 1.0f, 0.0f } }
+void VKVideoRendererYUV420::createVertexBuffer()
+{
+    const Vertex vertices[4] {
+        { {  1.0f,  1.0f, 0.0f }, { 1.0f, 1.0f } },
+        { { -1.0f,  1.0f, 0.0f }, { 0.0f, 1.0f } },
+        { { -1.0f, -1.0f, 0.0f }, { 0.0f, 0.0f } },
+        { {  1.0f, -1.0f, 0.0f }, { 1.0f, 0.0f } }
     };
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
 
-    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+    VkDeviceSize bufferSize = sizeof(vertices);
     // Create a vertex buffer
     createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -983,7 +982,7 @@ void VKVideoRendererYUV420::createVertexBuffer() {
 
     void* data = nullptr;
     CALL_VK(vkMapMemory(m_deviceInfo.device, stagingBufferMemory, 0, bufferSize, 0, &data));
-    memcpy(data, vertices.data(), bufferSize);
+    memcpy(data, vertices, bufferSize);
     vkUnmapMemory(m_deviceInfo.device, stagingBufferMemory);
 
     createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -997,17 +996,17 @@ void VKVideoRendererYUV420::createVertexBuffer() {
 }
 
 // Create our vertex buffer
-void VKVideoRendererYUV420::createIndexBuffer() {
-
-    std::vector<uint16_t> indices {
-            0, 1, 2, 2, 3, 0
+void VKVideoRendererYUV420::createIndexBuffer()
+{
+    const uint16_t indices[6] {
+        0, 1, 2, 2, 3, 0
     };
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
 
-    m_indexCount = static_cast<uint32_t>(indices.size());
-    VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+    m_indexCount = sizeof(indices) / sizeof(indices[0]);
+    VkDeviceSize bufferSize = sizeof(indices);
 
     // Create a index buffer
     createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -1016,7 +1015,7 @@ void VKVideoRendererYUV420::createIndexBuffer() {
 
     void* data = nullptr;
     CALL_VK(vkMapMemory(m_deviceInfo.device, stagingBufferMemory, 0, bufferSize, 0, &data));
-    memcpy(data, indices.data(), bufferSize);
+    memcpy(data, indices, bufferSize);
     vkUnmapMemory(m_deviceInfo.device, stagingBufferMemory);
 
     createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
