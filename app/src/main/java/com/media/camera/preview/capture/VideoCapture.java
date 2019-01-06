@@ -1,4 +1,4 @@
-package com.media.camera2glpreview.capture;
+package com.media.camera.preview.capture;
 
 import android.graphics.ImageFormat;
 import android.media.Image;

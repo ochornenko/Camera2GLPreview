@@ -1,4 +1,4 @@
-package com.media.camera2glpreview;
+package com.media.camera.preview.activity;
 
 import android.Manifest;
 import android.app.Activity;
@@ -12,20 +12,14 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentActivity;
-import android.view.MotionEvent;
-import android.view.View;
+import android.util.Size;
 import android.widget.FrameLayout;
 
-import com.media.camera2glpreview.capture.PreviewFrameHandler;
-import com.media.camera2glpreview.capture.VideoCameraPreview;
-import com.media.camera2glpreview.gesture.SimpleGestureFilter;
-import com.media.camera2glpreview.gesture.SimpleGestureFilter.SimpleGestureListener;
-import com.media.camera2glpreview.gesture.SimpleGestureFilter.SwipeDirection;
-import com.media.camera2glpreview.render.GLVideoRenderer;
+import com.media.camera.preview.R;
+import com.media.camera.preview.gesture.SimpleGestureFilter.SwipeDirection;
+import com.media.camera.preview.render.GLVideoRenderer;
 
-public class MainActivity extends FragmentActivity implements PreviewFrameHandler, SimpleGestureListener,
-        ActivityCompat.OnRequestPermissionsResultCallback {
+public class GLActivity extends BaseActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
 
     private static final int REQUEST_CAMERA_PERMISSION = 1;
     private static final String FRAGMENT_DIALOG = "dialog";
@@ -34,31 +28,24 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
     };
 
     private GLVideoRenderer mVideoRenderer;
-    private VideoCameraPreview mPreview;
-    private SimpleGestureFilter mDetector;
-    private ErrorDialog errorDialog;
+    private ErrorDialog mErrorDialog;
     private int mFilter = 0;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_gl);
 
-        mVideoRenderer = new GLVideoRenderer();
         GLSurfaceView glSurfaceView = findViewById(R.id.gl_surface_view);
-
+        mVideoRenderer = new GLVideoRenderer();
         mVideoRenderer.init(glSurfaceView);
 
-        mPreview = new VideoCameraPreview(this);
         ((FrameLayout) findViewById(R.id.preview)).addView(mPreview);
-
-        mDetector = new SimpleGestureFilter(this, this);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-
         mVideoRenderer.destroyRender();
     }
 
@@ -66,27 +53,22 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
     public void onResume() {
         super.onResume();
         if (!hasPermissionsGranted(CAMERA_PERMISSIONS)) {
-            mPreview.setVisibility(View.GONE);
             requestCameraPermission();
         } else {
-            mPreview.startBackgroundThread();
-            mPreview.setVisibility(View.VISIBLE);
+            mPreview.startCamera();
         }
     }
 
     @Override
     public void onPause() {
         if (hasPermissionsGranted(CAMERA_PERMISSIONS)) {
-            mPreview.closeCamera();
-            mPreview.stopBackgroundThread();
-            mPreview.setVisibility(View.GONE);
+            mPreview.stopCamera();
         }
         super.onPause();
     }
 
     @Override
     public void onPreviewFrame(byte[] data, int width, int height) {
-
         Integer rotation = mPreview.getSensorOrientation();
         mVideoRenderer.drawVideoFrame(data, width, height, rotation);
         mVideoRenderer.requestRender();
@@ -98,17 +80,16 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
             if (grantResults.length == CAMERA_PERMISSIONS.length) {
                 for (int result : grantResults) {
                     if (result != PackageManager.PERMISSION_GRANTED) {
-                        if (null == errorDialog || errorDialog.isHidden()) {
-                            errorDialog = ErrorDialog.newInstance(getString(R.string.request_permission));
-                            errorDialog.show(getSupportFragmentManager(), FRAGMENT_DIALOG);
+                        if (null == mErrorDialog || mErrorDialog.isHidden()) {
+                            mErrorDialog = ErrorDialog.newInstance(getString(R.string.request_permission));
+                            mErrorDialog.show(getSupportFragmentManager(), FRAGMENT_DIALOG);
                         }
                         break;
                     } else {
-                        if (null != errorDialog) {
-                            errorDialog.dismiss();
+                        if (null != mErrorDialog) {
+                            mErrorDialog.dismiss();
                         } else {
-                            mPreview.startBackgroundThread();
-                            mPreview.setVisibility(View.VISIBLE);
+                            mPreview.startCamera();
                         }
                     }
                 }
@@ -137,15 +118,12 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        mDetector.onTouchEvent(event);
-        return super.onTouchEvent(event);
-    }
-
-    @Override
     public void onSwipe(SwipeDirection direction) {
 
         switch (direction) {
+            case SWIPE_UP:
+                showResolutionDialog(mPreview.getOutputSizes());
+                break;
             case SWIPE_RIGHT:
                 if (mFilter > 0) {
                     mFilter--;
@@ -166,6 +144,12 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
         }
     }
 
+    @Override
+    public void onItemClick(Size item) {
+        super.onItemClick(item);
+        mPreview.changeResolution(item);
+    }
+
     /**
      * Shows an error message dialog.
      */
@@ -181,6 +165,7 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
             return dialog;
         }
 
+        @NonNull
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             final Activity activity = getActivity();
@@ -201,6 +186,7 @@ public class MainActivity extends FragmentActivity implements PreviewFrameHandle
      */
     public static class ConfirmationDialog extends DialogFragment {
 
+        @NonNull
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             final Activity activity = getActivity();

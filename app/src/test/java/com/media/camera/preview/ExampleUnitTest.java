@@ -1,4 +1,4 @@
-package com.media.camera2glpreview;
+package com.media.camera.preview;
 
 import org.junit.Test;
 

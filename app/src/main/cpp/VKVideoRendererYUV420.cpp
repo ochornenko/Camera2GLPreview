@@ -28,19 +28,33 @@ VKVideoRendererYUV420::VKVideoRendererYUV420()
 
 VKVideoRendererYUV420::~VKVideoRendererYUV420()
 {
-    vkFreeCommandBuffers(m_deviceInfo.device, m_render.cmdPool, m_render.cmdBufferLen, m_render.cmdBuffer.get());
-
-    vkDestroyCommandPool(m_deviceInfo.device, m_render.cmdPool, nullptr);
-    vkDestroyRenderPass(m_deviceInfo.device, m_render.renderPass, nullptr);
-    deleteSwapChain();
+    deleteCommandPool();
     deleteGraphicsPipeline();
-    deleteBuffers();
     deleteTextures();
+    deleteUniformBuffers();
+    deleteBuffers();
+    deleteRenderPass();
+    deleteSwapChain();
 
     vkDestroyDevice(m_deviceInfo.device, nullptr);
     vkDestroyInstance(m_deviceInfo.instance, nullptr);
 
     m_deviceInfo.initialized = false;
+}
+
+void VKVideoRendererYUV420::createRenderPipeline()
+{
+    createRenderPass();
+    createFrameBuffers(); // Create 2 frame buffers.
+    createVertexBuffer();
+    createIndexBuffer();
+    createUniformBuffers();
+    createTextures();
+    createProgram(kVertexShader, kFragmentShader); // Create graphics pipeline
+    createDescriptorSet();
+    createCommandPool();
+
+    m_deviceInfo.initialized = true;
 }
 
 void VKVideoRendererYUV420::init(ANativeWindow* window, size_t width, size_t height)
@@ -64,7 +78,6 @@ void VKVideoRendererYUV420::init(ANativeWindow* window, size_t width, size_t hei
     };
 
     createDevice(window, &appInfo);
-
     createSwapChain();
 }
 
@@ -114,12 +127,27 @@ void VKVideoRendererYUV420::draw(uint8_t *buffer, size_t length, size_t width, s
 {
     m_pBuffer = buffer;
     m_length = length;
-    m_width = width;
-    m_height = height;
     m_rotation = rotation;
 
+    if (isInitialized() && (m_width != width || m_height != height)) {
+        m_width = width;
+        m_height = height;
+
+        deleteUniformBuffers();
+        deleteTextures();
+        deleteCommandPool();
+
+        createUniformBuffers();
+        createTextures();
+        updateDescriptorSet();
+        createCommandPool();
+    } else {
+        m_width = width;
+        m_height = height;
+    }
+
     if (!isInitialized()) {
-        createRenderPass();
+        createRenderPipeline();
     } else {
         updateTextures();
     }
@@ -141,7 +169,7 @@ int VKVideoRendererYUV420::getMaxFilter()
 
 bool VKVideoRendererYUV420::createTextures()
 {
-    for (uint32_t i = 0; i < kTextureCount; i++) {
+    for (int i = 0; i < kTextureCount; i++) {
         loadTexture(m_pBuffer, texType[i], m_width, m_height, &textures[i], VK_IMAGE_USAGE_SAMPLED_BIT,
                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
@@ -185,22 +213,27 @@ bool VKVideoRendererYUV420::createTextures()
 
 bool VKVideoRendererYUV420::updateTextures()
 {
-    for (uint32_t i = 0; i < kTextureCount; i++) {
+    for (int i = 0; i < kTextureCount; i++) {
         size_t offset = getBufferOffset(&textures[i], texType[i], m_width, m_height);;
-        memcpy(textures[i].mapped, m_pBuffer + offset, textures[i].width * textures[i].height);
+        copyTextureData(&textures[i], m_pBuffer + offset);
     }
     return true;
 }
 
 void VKVideoRendererYUV420::deleteTextures()
 {
-    for (uint32_t i = 0; i < kTextureCount; i++) {
+    for (int i = 0; i < kTextureCount; i++) {
         vkDestroyImageView(m_deviceInfo.device, textures[i].view, nullptr);
         vkDestroyImage(m_deviceInfo.device, textures[i].image, nullptr);
         vkDestroySampler(m_deviceInfo.device, textures[i].sampler, nullptr);
         vkUnmapMemory(m_deviceInfo.device, textures[i].mem);
         vkFreeMemory(m_deviceInfo.device, textures[i].mem, nullptr);
     }
+}
+
+void VKVideoRendererYUV420::deleteRenderPass()
+{
+    vkDestroyRenderPass(m_deviceInfo.device, m_render.renderPass, nullptr);
 }
 
 int VKVideoRendererYUV420::createProgram(const char *pVertexSource, const char *pFragmentSource)
@@ -362,6 +395,14 @@ void VKVideoRendererYUV420::deleteSwapChain()
     vkDestroySwapchainKHR(m_deviceInfo.device, m_swapchainInfo.swapchain, nullptr);
 }
 
+void VKVideoRendererYUV420::deleteCommandPool()
+{
+    vkFreeCommandBuffers(m_deviceInfo.device, m_render.cmdPool, m_render.cmdBufferLen, m_render.cmdBuffer.get());
+    vkDestroyCommandPool(m_deviceInfo.device, m_render.cmdPool, nullptr);
+    vkDestroyFence(m_deviceInfo.device, m_render.fence, nullptr);
+    vkDestroySemaphore(m_deviceInfo.device, m_render.semaphore, nullptr);
+}
+
 void VKVideoRendererYUV420::deleteGraphicsPipeline()
 {
     if (m_gfxPipeline.pipeline == VK_NULL_HANDLE) return;
@@ -372,7 +413,7 @@ void VKVideoRendererYUV420::deleteGraphicsPipeline()
     vkDestroyPipelineLayout(m_deviceInfo.device, m_gfxPipeline.layout, nullptr);
 }
 
-void VKVideoRendererYUV420::createFrameBuffers(VkRenderPass& renderPass, VkImageView depthView)
+void VKVideoRendererYUV420::createFrameBuffers(VkImageView depthView)
 {
     // query display attachment to swapchain
     uint32_t swapchainImagesCount = 0;
@@ -420,7 +461,7 @@ void VKVideoRendererYUV420::createFrameBuffers(VkRenderPass& renderPass, VkImage
         VkFramebufferCreateInfo fbCreateInfo{
             .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
             .pNext = nullptr,
-            .renderPass = renderPass,
+            .renderPass = m_render.renderPass,
             .layers = 1,
             .attachmentCount = 1,  // 2 if using depth
             .pAttachments = attachments,
@@ -725,8 +766,53 @@ VkResult VKVideoRendererYUV420::createGraphicsPipeline(const char *pVertexSource
     return pipelineResult;
 }
 
+void VKVideoRendererYUV420::updateDescriptorSet()
+{
+    VkDescriptorBufferInfo bufferInfo {
+            bufferInfo.buffer = m_buffers.uboBuffer,
+            bufferInfo.offset = 0,
+            bufferInfo.range = sizeof(UniformBufferObject)
+    };
+
+    VkDescriptorImageInfo texDsts[kTextureCount];
+    memset(texDsts, 0, sizeof(texDsts));
+    for (int32_t idx = 0; idx < kTextureCount; idx++) {
+        texDsts[idx].sampler = textures[idx].sampler;
+        texDsts[idx].imageView = textures[idx].view;
+        texDsts[idx].imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+    }
+
+    VkWriteDescriptorSet writeDst[2] {
+            {
+                    .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                    .pNext = nullptr,
+                    .dstSet = m_gfxPipeline.descSet,
+                    .dstBinding = 0,
+                    .dstArrayElement = 0,
+                    .descriptorCount = 1,
+                    .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                    .pImageInfo = nullptr,
+                    .pBufferInfo = &bufferInfo,
+                    .pTexelBufferView = nullptr
+            },
+            {
+                    .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                    .pNext = nullptr,
+                    .dstSet = m_gfxPipeline.descSet,
+                    .dstBinding = 1,
+                    .dstArrayElement = 0,
+                    .descriptorCount = kTextureCount,
+                    .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                    .pImageInfo = texDsts,
+                    .pBufferInfo = nullptr,
+                    .pTexelBufferView = nullptr
+            }
+    };
+    vkUpdateDescriptorSets(m_deviceInfo.device, 2, writeDst, 0, nullptr);
+}
+
 // initialize descriptor set
-VkResult VKVideoRendererYUV420::createDescriptorSet()
+void VKVideoRendererYUV420::createDescriptorSet()
 {
     const VkDescriptorPoolSize poolSizes[2] {
         {
@@ -756,49 +842,110 @@ VkResult VKVideoRendererYUV420::createDescriptorSet()
             .pSetLayouts = &m_gfxPipeline.descLayout};
     CALL_VK(vkAllocateDescriptorSets(m_deviceInfo.device, &alloc_info, &m_gfxPipeline.descSet));
 
-    VkDescriptorBufferInfo bufferInfo {
-            bufferInfo.buffer = m_buffers.uboBuffer,
-            bufferInfo.offset = 0,
-            bufferInfo.range = sizeof(UniformBufferObject)
-    };
+    updateDescriptorSet();
+}
 
-    VkDescriptorImageInfo texDsts[kTextureCount];
-    memset(texDsts, 0, sizeof(texDsts));
-    for (int32_t idx = 0; idx < kTextureCount; idx++) {
-        texDsts[idx].sampler = textures[idx].sampler;
-        texDsts[idx].imageView = textures[idx].view;
-        texDsts[idx].imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+void VKVideoRendererYUV420::createCommandPool()
+{
+// Create a pool of command buffers to allocate command buffer from
+    VkCommandPoolCreateInfo cmdPoolCreateInfo {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+            .queueFamilyIndex = 0,
+    };
+    CALL_VK(vkCreateCommandPool(m_deviceInfo.device, &cmdPoolCreateInfo, nullptr,
+                                &m_render.cmdPool));
+
+    // Record a command buffer that just clear the screen
+    // 1 command buffer draw in 1 framebuffer
+    // In our case we need 2 command as we have 2 framebuffer
+    m_render.cmdBufferLen = m_swapchainInfo.swapchainLength;
+    m_render.cmdBuffer = std::make_unique<VkCommandBuffer[]>(m_swapchainInfo.swapchainLength);
+    VkCommandBufferAllocateInfo cmdBufferCreateInfo {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+            .pNext = nullptr,
+            .commandPool = m_render.cmdPool,
+            .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+            .commandBufferCount = m_render.cmdBufferLen,
+    };
+    CALL_VK(vkAllocateCommandBuffers(m_deviceInfo.device, &cmdBufferCreateInfo, m_render.cmdBuffer.get()));
+
+    for (int bufferIndex = 0; bufferIndex < m_swapchainInfo.swapchainLength; bufferIndex++) {
+        // We start by creating and declare the "beginning" our command buffer
+        VkCommandBufferBeginInfo cmdBufferBeginInfo {
+                .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+                .pNext = nullptr,
+                .flags = 0,
+                .pInheritanceInfo = nullptr,
+        };
+        CALL_VK(vkBeginCommandBuffer(m_render.cmdBuffer[bufferIndex], &cmdBufferBeginInfo));
+
+        // transition the buffer into color attachment
+        setImageLayout(m_render.cmdBuffer[bufferIndex],
+                       m_swapchainInfo.displayImages[bufferIndex],
+                       VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                       VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
+        // Now we start a renderpass. Any draw command has to be recorded in a renderpass
+        VkClearValue clearVals {
+                .color.float32[0] = 0.0f,
+                .color.float32[1] = 0.0f,
+                .color.float32[2] = 0.0f,
+                .color.float32[3] = 1.0f,
+        };
+
+        VkRenderPassBeginInfo renderPassBeginInfo{
+                .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+                .pNext = nullptr,
+                .renderPass = m_render.renderPass,
+                .framebuffer = m_swapchainInfo.framebuffers[bufferIndex],
+                .renderArea = { .offset = { .x = 0, .y = 0 },
+                        .extent = m_swapchainInfo.displaySize},
+                .clearValueCount = 1,
+                .pClearValues = &clearVals};
+        vkCmdBeginRenderPass(m_render.cmdBuffer[bufferIndex], &renderPassBeginInfo,
+                             VK_SUBPASS_CONTENTS_INLINE);
+        // Bind what is necessary to the command buffer
+        vkCmdBindPipeline(m_render.cmdBuffer[bufferIndex],
+                          VK_PIPELINE_BIND_POINT_GRAPHICS, m_gfxPipeline.pipeline);
+        vkCmdBindDescriptorSets(m_render.cmdBuffer[bufferIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                m_gfxPipeline.layout, 0, 1, &m_gfxPipeline.descSet, 0, nullptr);
+        VkDeviceSize offset = 0;
+        vkCmdBindVertexBuffers(m_render.cmdBuffer[bufferIndex], 0, 1, &m_buffers.vertexBuffer, &offset);
+
+        vkCmdBindIndexBuffer(m_render.cmdBuffer[bufferIndex], m_buffers.indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+        vkCmdDrawIndexed(m_render.cmdBuffer[bufferIndex], m_indexCount, 1, 0, 0, 0);
+
+        vkCmdEndRenderPass(m_render.cmdBuffer[bufferIndex]);
+        setImageLayout(m_render.cmdBuffer[bufferIndex],
+                       m_swapchainInfo.displayImages[bufferIndex],
+                       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                       VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                       VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+        CALL_VK(vkEndCommandBuffer(m_render.cmdBuffer[bufferIndex]));
     }
 
-    VkWriteDescriptorSet writeDst[2] {
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+    // We need to create a fence to be able, in the main loop, to wait for our
+    // draw command(s) to finish before swapping the framebuffers
+    VkFenceCreateInfo fenceCreateInfo {
+            .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
             .pNext = nullptr,
-            .dstSet = m_gfxPipeline.descSet,
-            .dstBinding = 0,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .pImageInfo = nullptr,
-            .pBufferInfo = &bufferInfo,
-            .pTexelBufferView = nullptr
-        },
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .pNext = nullptr,
-            .dstSet = m_gfxPipeline.descSet,
-            .dstBinding = 1,
-            .dstArrayElement = 0,
-            .descriptorCount = kTextureCount,
-            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .pImageInfo = texDsts,
-            .pBufferInfo = nullptr,
-            .pTexelBufferView = nullptr
-        }
+            .flags = 0,
     };
-    vkUpdateDescriptorSets(m_deviceInfo.device, 2, writeDst, 0, nullptr);
+    CALL_VK(vkCreateFence(m_deviceInfo.device, &fenceCreateInfo, nullptr, &m_render.fence));
 
-    return VK_SUCCESS;
+    // We need to create a semaphore to be able to wait, in the main loop, for our
+    // framebuffer to be available for us before drawing.
+    VkSemaphoreCreateInfo semaphoreCreateInfo {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
+    };
+    CALL_VK(vkCreateSemaphore(m_deviceInfo.device, &semaphoreCreateInfo, nullptr, &m_render.semaphore));
 }
 
 // A helper function
@@ -1035,7 +1182,10 @@ void VKVideoRendererYUV420::deleteBuffers()
 
     vkDestroyBuffer(m_deviceInfo.device, m_buffers.indexBuffer, nullptr);
     vkFreeMemory(m_deviceInfo.device, m_buffers.indexBufferMemory, nullptr);
+}
 
+void VKVideoRendererYUV420::deleteUniformBuffers()
+{
     vkDestroyBuffer(m_deviceInfo.device, m_buffers.uboBuffer, nullptr);
     vkFreeMemory(m_deviceInfo.device, m_buffers.uboBufferMemory, nullptr);
 }
@@ -1067,7 +1217,7 @@ VkResult VKVideoRendererYUV420::allocateMemoryTypeFromProperties(uint32_t typeBi
     return VK_ERROR_MEMORY_MAP_FAILED;
 }
 
-size_t VKVideoRendererYUV420::getBufferOffset(struct VulkanTexture* texture, TextureType type,
+size_t VKVideoRendererYUV420::getBufferOffset(VulkanTexture* texture, TextureType type,
         size_t width, size_t height)
 {
     size_t offset = 0;
@@ -1087,9 +1237,19 @@ size_t VKVideoRendererYUV420::getBufferOffset(struct VulkanTexture* texture, Tex
     return offset;
 }
 
-VkResult VKVideoRendererYUV420::loadTexture(uint8_t *buffer, TextureType type, size_t width, size_t height,
-                                            struct VulkanTexture* texture,
-                                                    VkImageUsageFlags usage, VkFlags required_props) {
+void VKVideoRendererYUV420::copyTextureData(VulkanTexture* texture, uint8_t* data)
+{
+    uint8_t* mappedData = (uint8_t*)texture->mapped;
+    for (int i = 0; i < texture->height; ++i) {
+        memcpy(mappedData, data, texture->width);
+        mappedData += texture->layout.rowPitch;
+        data += texture->width;
+    }
+}
+
+VkResult VKVideoRendererYUV420::loadTexture(uint8_t* buffer, TextureType type, size_t width, size_t height,
+                                            VulkanTexture* texture, VkImageUsageFlags usage, VkFlags required_props)
+{
     if (!(usage | required_props)) {
         LOGE("No usage and required_pros");
         return VK_ERROR_FORMAT_NOT_SUPPORTED;
@@ -1148,11 +1308,10 @@ VkResult VKVideoRendererYUV420::loadTexture(uint8_t *buffer, TextureType type, s
         const VkImageSubresource subres = {
                 .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .mipLevel = 0, .arrayLayer = 0,
         };
-        VkSubresourceLayout layout;
-        vkGetImageSubresourceLayout(m_deviceInfo.device, texture->image, &subres, &layout);
+        vkGetImageSubresourceLayout(m_deviceInfo.device, texture->image, &subres, &texture->layout);
         CALL_VK(vkMapMemory(m_deviceInfo.device, texture->mem, 0, memAlloc.allocationSize, 0, &texture->mapped));
 
-        memcpy(texture->mapped, buffer + offset, texture->width * texture->height);
+        copyTextureData(texture, buffer + offset);
     }
 
     texture->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -1326,120 +1485,4 @@ void VKVideoRendererYUV420::createRenderPass()
         .pDependencies = nullptr,
     };
     CALL_VK(vkCreateRenderPass(m_deviceInfo.device, &renderPassCreateInfo, nullptr, &m_render.renderPass));
-
-    // Create 2 frame buffers.
-    createFrameBuffers(m_render.renderPass);
-    createTextures();
-    createUniformBuffers();
-    createVertexBuffer();
-    createIndexBuffer();
-
-    // Create graphics pipeline
-    createProgram(kVertexShader, kFragmentShader);
-
-    createDescriptorSet();
-
-    // Create a pool of command buffers to allocate command buffer from
-    VkCommandPoolCreateInfo cmdPoolCreateInfo{
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = 0,
-    };
-    CALL_VK(vkCreateCommandPool(m_deviceInfo.device, &cmdPoolCreateInfo, nullptr,
-                                &m_render.cmdPool));
-
-    // Record a command buffer that just clear the screen
-    // 1 command buffer draw in 1 framebuffer
-    // In our case we need 2 command as we have 2 framebuffer
-    m_render.cmdBufferLen = m_swapchainInfo.swapchainLength;
-    m_render.cmdBuffer = std::make_unique<VkCommandBuffer[]>(m_swapchainInfo.swapchainLength);
-    VkCommandBufferAllocateInfo cmdBufferCreateInfo{
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = m_render.cmdPool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = m_render.cmdBufferLen,
-    };
-    CALL_VK(vkAllocateCommandBuffers(m_deviceInfo.device, &cmdBufferCreateInfo, m_render.cmdBuffer.get()));
-
-    for (int bufferIndex = 0; bufferIndex < m_swapchainInfo.swapchainLength; bufferIndex++) {
-        // We start by creating and declare the "beginning" our command buffer
-        VkCommandBufferBeginInfo cmdBufferBeginInfo{
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-            .pNext = nullptr,
-            .flags = 0,
-            .pInheritanceInfo = nullptr,
-        };
-        CALL_VK(vkBeginCommandBuffer(m_render.cmdBuffer[bufferIndex],
-                                     &cmdBufferBeginInfo));
-
-        // transition the buffer into color attachment
-        setImageLayout(m_render.cmdBuffer[bufferIndex],
-                       m_swapchainInfo.displayImages[bufferIndex],
-                       VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                       VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-
-        // Now we start a renderpass. Any draw command has to be recorded in a renderpass
-        VkClearValue clearVals{
-            .color.float32[0] = 0.0f,
-            .color.float32[1] = 0.0f,
-            .color.float32[2] = 0.0f,
-            .color.float32[3] = 1.0f,
-        };
-
-        VkRenderPassBeginInfo renderPassBeginInfo{
-            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-            .pNext = nullptr,
-            .renderPass = m_render.renderPass,
-            .framebuffer = m_swapchainInfo.framebuffers[bufferIndex],
-            .renderArea = { .offset = { .x = 0, .y = 0 },
-            .extent = m_swapchainInfo.displaySize},
-            .clearValueCount = 1,
-            .pClearValues = &clearVals};
-        vkCmdBeginRenderPass(m_render.cmdBuffer[bufferIndex], &renderPassBeginInfo,
-                             VK_SUBPASS_CONTENTS_INLINE);
-        // Bind what is necessary to the command buffer
-        vkCmdBindPipeline(m_render.cmdBuffer[bufferIndex],
-                          VK_PIPELINE_BIND_POINT_GRAPHICS, m_gfxPipeline.pipeline);
-        vkCmdBindDescriptorSets(
-                m_render.cmdBuffer[bufferIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
-                m_gfxPipeline.layout, 0, 1, &m_gfxPipeline.descSet, 0, nullptr);
-        VkDeviceSize offset = 0;
-        vkCmdBindVertexBuffers(m_render.cmdBuffer[bufferIndex], 0, 1, &m_buffers.vertexBuffer, &offset);
-
-        vkCmdBindIndexBuffer(m_render.cmdBuffer[bufferIndex], m_buffers.indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-        vkCmdDrawIndexed(m_render.cmdBuffer[bufferIndex], m_indexCount, 1, 0, 0, 0);
-
-        vkCmdEndRenderPass(m_render.cmdBuffer[bufferIndex]);
-        setImageLayout(m_render.cmdBuffer[bufferIndex],
-                       m_swapchainInfo.displayImages[bufferIndex],
-                       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                       VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                       VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
-        CALL_VK(vkEndCommandBuffer(m_render.cmdBuffer[bufferIndex]));
-    }
-
-    // We need to create a fence to be able, in the main loop, to wait for our
-    // draw command(s) to finish before swapping the framebuffers
-    VkFenceCreateInfo fenceCreateInfo{
-        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-    };
-    CALL_VK(vkCreateFence(m_deviceInfo.device, &fenceCreateInfo, nullptr, &m_render.fence));
-
-    // We need to create a semaphore to be able to wait, in the main loop, for our
-    // framebuffer to be available for us before drawing.
-    VkSemaphoreCreateInfo semaphoreCreateInfo{
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-    };
-    CALL_VK(vkCreateSemaphore(m_deviceInfo.device, &semaphoreCreateInfo, nullptr, &m_render.semaphore));
-
-    m_deviceInfo.initialized = true;
 }

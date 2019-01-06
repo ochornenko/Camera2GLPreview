@@ -1,4 +1,4 @@
-package com.media.camera2glpreview.render;
+package com.media.camera.preview.render;
 
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;

@@ -1,4 +1,4 @@
-package com.media.camera2glpreview.gesture;
+package com.media.camera.preview.gesture;
 
 import android.content.Context;
 import android.view.GestureDetector;

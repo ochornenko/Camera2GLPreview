@@ -1,25 +1,32 @@
-package com.media.camera2glpreview.capture;
+package com.media.camera.preview.capture;
 
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
+import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.ImageReader;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.util.Size;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -41,6 +48,9 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
     private ImageReader mImageReader;
     private Semaphore mCameraOpenCloseLock = new Semaphore(1);
     private Integer mSensorOrientation;
+    private List<Size> mOutputSizes = new ArrayList<>();
+    private int mWidth = 640;
+    private int mHeight = 480;
 
     public VideoCameraPreview(Context context) {
         super(context);
@@ -51,7 +61,7 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
 
         mVideoCapture = new VideoCapture((PreviewFrameHandler) context);
 
-        Log.i(TAG, "VideoCameraPreview");
+        setVisibility(View.GONE);
     }
 
     public void surfaceCreated(SurfaceHolder holder) {
@@ -64,7 +74,7 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
 
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
         if (null == mImageReader) {
-            mImageReader = ImageReader.newInstance(640, 480, ImageFormat.YUV_420_888, 2);
+            mImageReader = ImageReader.newInstance(mWidth, mHeight, ImageFormat.YUV_420_888, 2);
             mImageReader.setOnImageAvailableListener(mVideoCapture, mBackgroundHandler);
             openCamera();
         }
@@ -72,6 +82,29 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
 
     public Integer getSensorOrientation() {
         return mSensorOrientation;
+    }
+
+    public List<Size> getOutputSizes() {
+        return mOutputSizes;
+    }
+
+    public void startCamera() {
+        startBackgroundThread();
+        setVisibility(View.VISIBLE);
+    }
+
+    public void stopCamera() {
+        closeCamera();
+        stopBackgroundThread();
+        setVisibility(View.GONE);
+    }
+
+    public void changeResolution(Size size) {
+        mWidth = size.getWidth();
+        mHeight = size.getHeight();
+
+        stopCamera();
+        startCamera();
     }
 
     /**
@@ -98,6 +131,11 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
                 if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
                     continue;
                 }
+                StreamConfigurationMap streamConfigs = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+                if (streamConfigs != null) {
+                    mOutputSizes = Arrays.asList(streamConfigs.getOutputSizes(SurfaceTexture.class));
+                }
+
                 mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
                 mCameraId = cameraId;
             }

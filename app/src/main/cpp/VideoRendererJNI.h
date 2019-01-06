@@ -7,16 +7,16 @@
 extern "C" {
 #endif
 
-#define JCMCRV(rettype, name)                                             \
-  rettype JNIEXPORT JNICALL Java_com_media_camera2glpreview_render_VideoRenderer_##name
+#define JCMCPRV(rettype, name)                                             \
+  rettype JNIEXPORT JNICALL Java_com_media_camera_preview_render_VideoRenderer_##name
 
-JCMCRV(void, create)(JNIEnv * env, jobject obj, jint type);
-JCMCRV(void, destroy)(JNIEnv * env, jobject obj);
-JCMCRV(void, init)(JNIEnv * env, jobject obj, jobject surface, jint width, jint height);
-JCMCRV(void, render)(JNIEnv * env, jobject obj);
-JCMCRV(void, draw)(JNIEnv * env, jobject obj, jbyteArray data, jint width, jint height, jint rotation);
-JCMCRV(void, applyFilter)(JNIEnv * env, jobject obj, jint filter);
-JCMCRV(jint, getMaxFilter)(JNIEnv * env, jobject obj);
+JCMCPRV(void, create)(JNIEnv * env, jobject obj, jint type);
+JCMCPRV(void, destroy)(JNIEnv * env, jobject obj);
+JCMCPRV(void, init)(JNIEnv * env, jobject obj, jobject surface, jint width, jint height);
+JCMCPRV(void, render)(JNIEnv * env, jobject obj);
+JCMCPRV(void, draw)(JNIEnv * env, jobject obj, jbyteArray data, jint width, jint height, jint rotation);
+JCMCPRV(void, applyFilter)(JNIEnv * env, jobject obj, jint filter);
+JCMCPRV(jint, getMaxFilter)(JNIEnv * env, jobject obj);
 
 #ifdef __cplusplus
 }

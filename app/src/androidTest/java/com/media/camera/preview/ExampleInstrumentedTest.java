@@ -1,4 +1,4 @@
-package com.media.camera2glpreview;
+package com.media.camera.preview;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("com.media.camera2glpreview", appContext.getPackageName());
+        assertEquals("com.media.camera.preview", appContext.getPackageName());
     }
 }

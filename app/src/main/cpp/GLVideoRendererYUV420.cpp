@@ -78,6 +78,7 @@ void GLVideoRendererYUV420::updateFrame(const video_frame& frame)
         m_pDataY = std::make_unique<uint8_t[]>(m_sizeY + m_sizeU + m_sizeV);
 		m_pDataU = m_pDataY.get() + m_sizeY;
 		m_pDataV = m_pDataU + m_sizeU;
+		isProgramChanged = true;
 	}
 
 	m_width = frame.width;

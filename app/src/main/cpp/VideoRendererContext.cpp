@@ -52,7 +52,7 @@ void VideoRendererContext::storeContext(JNIEnv *env, jobject obj, VideoRendererC
 
     if (NULL == cls)
     {
-        LOGE("Could not find com/media/camera2glpreview/render/VideoRenderer.");
+        LOGE("Could not find com/media/camera/preview/render/VideoRenderer.");
         return;
     }
 

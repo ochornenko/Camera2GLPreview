@@ -1,4 +1,4 @@
-package com.media.camera2glpreview.capture;
+package com.media.camera.preview.capture;
 
 /**
  * Created by oleg on 11/2/17.
