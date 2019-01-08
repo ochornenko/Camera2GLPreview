@@ -11,8 +11,8 @@ public:
     virtual ~GLVideoRendererYUV420Filter();
 
     virtual void render() override ;
-    virtual void applyFilter(int filter) override;
-    virtual int getMaxFilter() override;
+    virtual void setParameters(uint32_t params) override;
+    virtual uint32_t getParameters() override;
 
 private:
     size_t m_filter = 0;

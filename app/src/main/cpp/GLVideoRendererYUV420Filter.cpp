@@ -23,14 +23,17 @@ GLVideoRendererYUV420Filter::~GLVideoRendererYUV420Filter()
 
 }
 
-void GLVideoRendererYUV420Filter::applyFilter(int filter)
+void GLVideoRendererYUV420Filter::setParameters(uint32_t params)
 {
-    m_filter = (size_t)filter;
+    GLVideoRendererYUV420::setParameters(params);
+    m_filter = params & 0x0000000F;
 }
 
-int GLVideoRendererYUV420Filter::getMaxFilter()
+uint32_t GLVideoRendererYUV420Filter::getParameters()
 {
-    return (int)m_fragmentShader.size();
+    m_params |= (m_fragmentShader.size() << 4) & 0x000000F0;
+
+    return m_params;
 }
 
 void GLVideoRendererYUV420Filter::render()

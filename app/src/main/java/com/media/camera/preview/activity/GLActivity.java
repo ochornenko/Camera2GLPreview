@@ -127,16 +127,20 @@ public class GLActivity extends BaseActivity implements ActivityCompat.OnRequest
             case SWIPE_RIGHT:
                 if (mFilter > 0) {
                     mFilter--;
-                    mVideoRenderer.applyVideoFilter(mFilter);
+                    mParams = (mParams & 0xFFFFFFF0) | mFilter;
+                    mVideoRenderer.setVideoParameters(mParams);
                 } else {
                     Intent intent = new Intent(this, VKActivity.class);
                     startActivity(intent);
                 }
                 break;
             case SWIPE_LEFT:
-                if (mFilter < mVideoRenderer.getMaxVideoFilter() - 1) {
+                mParams = mVideoRenderer.getVideoParameters();
+                int maxFilter = (mParams & 0x000000F0) >>> 4;
+                if (mFilter < maxFilter - 1) {
                     mFilter++;
-                    mVideoRenderer.applyVideoFilter(mFilter);
+                    mParams = (mParams & 0xFFFFFFF0) | mFilter;
+                    mVideoRenderer.setVideoParameters(mParams);
                 }
                 break;
             default:

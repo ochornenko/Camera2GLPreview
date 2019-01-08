@@ -157,14 +157,14 @@ void VKVideoRendererYUV420::draw(uint8_t *buffer, size_t length, size_t width, s
     }
 }
 
-void VKVideoRendererYUV420::applyFilter(int filter)
+void VKVideoRendererYUV420::setParameters(uint32_t params)
 {
-
+    m_params = params;
 }
 
-int VKVideoRendererYUV420::getMaxFilter()
+uint32_t VKVideoRendererYUV420::getParameters()
 {
-    return 0;
+    return m_params;
 }
 
 bool VKVideoRendererYUV420::createTextures()

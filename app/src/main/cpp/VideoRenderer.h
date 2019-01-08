@@ -29,8 +29,8 @@ public:
 	virtual void render() = 0;
 	virtual void updateFrame(const video_frame& frame) = 0;
 	virtual void draw(uint8_t *buffer, size_t length, size_t width, size_t height, int rotation) = 0;
-	virtual void applyFilter(int filter) = 0;
-	virtual int getMaxFilter() = 0;
+	virtual void setParameters(uint32_t params) = 0;
+	virtual uint32_t getParameters() = 0;
 	virtual bool createTextures() = 0;
 	virtual bool updateTextures() = 0;
 	virtual void deleteTextures() = 0;
@@ -41,6 +41,7 @@ protected:
 	size_t m_height;
     size_t m_backingWidth;
     size_t m_backingHeight;
+	uint32_t m_params;
 	int m_rotation;
 
 	bool isDirty;

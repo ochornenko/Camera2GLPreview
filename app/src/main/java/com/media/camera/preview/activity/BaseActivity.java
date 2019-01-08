@@ -25,6 +25,7 @@ public abstract class BaseActivity extends FragmentActivity implements PreviewFr
     protected VideoCameraPreview mPreview;
     protected SimpleGestureFilter mDetector;
     protected ResolutionDialog mResolutionDialog;
+    protected int mParams;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -147,13 +147,14 @@ void GLVideoRendererYUV420::draw(uint8_t *buffer, size_t length, size_t width, s
 	updateFrame(frame);
 }
 
-void GLVideoRendererYUV420::applyFilter(int filter)
+void GLVideoRendererYUV420::setParameters(uint32_t params)
 {
+	m_params = params;
 }
 
-int GLVideoRendererYUV420::getMaxFilter()
+uint32_t GLVideoRendererYUV420::getParameters()
 {
-    return 0;
+    return m_params;
 }
 
 bool GLVideoRendererYUV420::createTextures()

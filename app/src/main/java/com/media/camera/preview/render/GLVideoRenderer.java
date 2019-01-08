@@ -35,12 +35,12 @@ public class GLVideoRenderer extends VideoRenderer implements GLSurfaceView.Rend
         draw(data, width, height, rotation);
     }
 
-    public void applyVideoFilter(int filter) {
-        applyFilter(filter);
+    public void setVideoParameters(int params) {
+        setParameters(params);
     }
 
-    public int getMaxVideoFilter() {
-        return getMaxFilter();
+    public int getVideoParameters() {
+        return getParameters();
     }
 
     @Override

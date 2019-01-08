@@ -20,8 +20,8 @@ public:
     void init(ANativeWindow* window, size_t width, size_t height);
 	void render();
 	void draw(uint8_t *buffer, size_t length, size_t width, size_t height, int rotation);
-	void applyFilter(int filter);
-	int getMaxFilter();
+	void setParameters(uint32_t params);
+	uint32_t getParameters();
 
 	static void createContext(JNIEnv *env, jobject obj, jint type);
 	static void storeContext(JNIEnv *env, jobject obj, VideoRendererContext *context);

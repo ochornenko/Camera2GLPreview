@@ -42,18 +42,18 @@ JCMCPRV(void, draw)(JNIEnv * env, jobject obj, jbyteArray data, jint width, jint
 	env->ReleaseByteArrayElements(data, bufferPtr, 0);
 }
 
-JCMCPRV(void, applyFilter)(JNIEnv * env, jobject obj, jint filter)
+JCMCPRV(void, setParameters)(JNIEnv * env, jobject obj, jint params)
 {
 	VideoRendererContext* context = VideoRendererContext::getContext(env, obj);
 
-	if (context) context->applyFilter(filter);
+	if (context) context->setParameters((uint32_t)params);
 }
 
-JCMCPRV(jint, getMaxFilter)(JNIEnv * env, jobject obj)
+JCMCPRV(jint, getParameters)(JNIEnv * env, jobject obj)
 {
 	VideoRendererContext* context = VideoRendererContext::getContext(env, obj);
 
-	if (context) return context->getMaxFilter();
+	if (context) return context->getParameters();
 
 	return 0;
 }

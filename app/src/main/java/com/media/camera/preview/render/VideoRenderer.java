@@ -27,8 +27,8 @@ public abstract class VideoRenderer {
     protected native void init(Surface surface, int width, int height);
     protected native void render();
     protected native void draw(byte[] data, int width, int height, int rotation);
-    protected native void applyFilter(int filter);
-    protected native int getMaxFilter();
+    protected native void setParameters(int params);
+    protected native int getParameters();
 
     static {
         System.loadLibrary("media-lib");
