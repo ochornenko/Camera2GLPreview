@@ -1,7 +1,6 @@
 package com.media.camera.preview.activity;
 
 import android.os.Bundle;
-import android.util.Size;
 import android.view.SurfaceView;
 import android.widget.FrameLayout;
 
@@ -63,11 +62,5 @@ public class VKActivity extends BaseActivity {
             default:
                 break;
         }
-    }
-
-    @Override
-    public void onItemClick(Size item) {
-        super.onItemClick(item);
-        mPreview.changeResolution(item);
     }
 }

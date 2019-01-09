@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
-import android.util.Size;
 import android.widget.FrameLayout;
 
 import com.media.camera.preview.R;
@@ -146,12 +145,6 @@ public class GLActivity extends BaseActivity implements ActivityCompat.OnRequest
             default:
                 break;
         }
-    }
-
-    @Override
-    public void onItemClick(Size item) {
-        super.onItemClick(item);
-        mPreview.changeResolution(item);
     }
 
     /**

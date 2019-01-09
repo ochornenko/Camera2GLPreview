@@ -9,6 +9,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Size;
 import android.view.MotionEvent;
+import android.widget.TextView;
 
 import com.media.camera.preview.R;
 import com.media.camera.preview.adapter.ItemAdapter;
@@ -20,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class BaseActivity extends FragmentActivity implements PreviewFrameHandler,
-        SimpleGestureFilter.SimpleGestureListener, ItemAdapter.ItemListener {
+        SimpleGestureFilter.SimpleGestureListener {
 
     protected VideoCameraPreview mPreview;
     protected SimpleGestureFilter mDetector;
@@ -47,35 +48,48 @@ public abstract class BaseActivity extends FragmentActivity implements PreviewFr
         mResolutionDialog.show();
     }
 
-    public class ResolutionDialog extends Dialog {
-        private RecyclerView mRecyclerView;
-        private ItemAdapter mAdapter;
+    class BaseDialog extends Dialog {
+        RecyclerView mRecyclerView;
+        TextView mTextView;
 
-        ResolutionDialog(@NonNull Context context) {
+        BaseDialog(@NonNull Context context) {
             super(context);
 
-            setContentView(R.layout.resolution_dialog);
+            setContentView(R.layout.dialog);
 
             if (getWindow() != null) {
                 getWindow().setBackgroundDrawableResource(android.R.color.transparent);
             }
             mRecyclerView = findViewById(R.id.recycler_view);
-
             mRecyclerView.setHasFixedSize(true);
             mRecyclerView.setLayoutManager(new LinearLayoutManager(BaseActivity.this));
 
+            mTextView = findViewById(R.id.text_view);
+        }
+    }
+
+    public class ResolutionDialog extends BaseDialog {
+        private ItemAdapter<Size> mAdapter;
+
+        ResolutionDialog(@NonNull Context context) {
+            super(context);
+
+            mTextView.setText(R.string.select_resolution);
             ArrayList<Size> items = new ArrayList<>();
-            mAdapter = new ItemAdapter(items, BaseActivity.this);
+            mAdapter = new ItemAdapter<>(items, mListener, R.layout.size_list_item);
             mRecyclerView.setAdapter(mAdapter);
         }
 
         void setItems(List<Size> items) {
             mAdapter.setItems(items);
         }
-    }
 
-    @Override
-    public void onItemClick(Size item) {
-        mResolutionDialog.dismiss();
+        private ItemAdapter.ItemListener<Size> mListener = new ItemAdapter.ItemListener<Size>() {
+            @Override
+            public void onItemClick(Size item) {
+                dismiss();
+                mPreview.changeResolution(item);
+            }
+        };
     }
 }
