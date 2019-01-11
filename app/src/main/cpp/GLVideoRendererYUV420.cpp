@@ -38,6 +38,7 @@ GLVideoRendererYUV420::GLVideoRendererYUV420()
 	, m_textureYLoc(0)
 	, m_textureULoc(0)
 	, m_textureVLoc(0)
+	, m_textureSize(0)
 	, m_uniformProjection(0)
     , m_uniformRotation(0)
     , m_uniformScale(0)
@@ -293,6 +294,7 @@ int GLVideoRendererYUV420::createProgram(const char *pVertexSource, const char *
 	m_textureYLoc = glGetUniformLocation(m_program, "s_textureY");
 	m_textureULoc = glGetUniformLocation(m_program, "s_textureU");
 	m_textureVLoc = glGetUniformLocation(m_program, "s_textureV");
+	m_textureSize = glGetUniformLocation(m_program, "texSize");
 	m_textureLoc = (GLuint)glGetAttribLocation(m_program, "texcoord");
 
 	return m_program;
@@ -336,6 +338,13 @@ GLuint GLVideoRendererYUV420::useProgram()
 		glUniform1i(m_textureVLoc, 2);
 		glVertexAttribPointer(m_textureLoc, 2, GL_FLOAT, GL_FALSE, 0, kTextureCoords);
 		glEnableVertexAttribArray(m_textureLoc);
+
+		if (m_textureSize >= 0) {
+			GLfloat size[2];
+			size[0] = m_width;
+			size[1] = m_height;
+			glUniform2fv(m_textureSize, 1, &size[0]);
+		}
 
 		isProgramChanged = false;
 	}

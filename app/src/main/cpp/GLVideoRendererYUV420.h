@@ -47,6 +47,7 @@ private:
 	GLint m_textureYLoc;
 	GLint m_textureULoc;
 	GLint m_textureVLoc;
+	GLint m_textureSize;
 	GLint m_uniformProjection;
 	GLint m_uniformRotation;
     GLint m_uniformScale;

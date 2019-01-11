@@ -75,11 +75,11 @@ static const char kFragmentShader2[] =
     uniform lowp sampler2D s_textureY;\
     uniform lowp sampler2D s_textureU;\
     uniform lowp sampler2D s_textureV;\
+    uniform vec2 texSize;\
     void main() {\
         float radius = 200.0;\
         float angle = 0.8;\
-        vec2 center = vec2(640/2, 480/2);\
-        vec2 texSize = vec2(640, 480);\
+        vec2 center = vec2(texSize.x / 2.0, texSize.y / 2.0);\
         vec2 tc = v_texcoord * texSize;\
         tc -= center;\
         float dist = length(tc);\
@@ -197,6 +197,7 @@ static const char kFragmentShader6[] =
     uniform lowp sampler2D s_textureY;\
     uniform lowp sampler2D s_textureU;\
     uniform lowp sampler2D s_textureV;\
+    uniform vec2 texSize;\
     vec4 YuvToRgb(vec2 uv) {\
         float y, u, v, r, g, b;\
         y = texture2D(s_textureY, uv).r;\
@@ -213,7 +214,6 @@ static const char kFragmentShader6[] =
         float circleRadius = float(0.5);\
         float minZoom = 0.4;\
         float maxZoom = 0.6;\
-        vec2 texSize = vec2(640.,480.);\
         vec2 center = vec2(texSize.x / 2.0, texSize.y / 2.0);\
         vec2 uv = v_texcoord;\
         uv.x *= (texSize.x / texSize.y);\
@@ -319,13 +319,12 @@ static const char kFragmentShader9[] =
     uniform lowp sampler2D s_textureY;\
     uniform lowp sampler2D s_textureU;\
     uniform lowp sampler2D s_textureV;\
+    uniform vec2 texSize;\
     void main() {\
-        float w = 640.;\
-        float h = 480.;\
         vec2 pixelSize = vec2(5.,5.);\
         vec2 uv = v_texcoord.xy;\
-        float dx = pixelSize.x*(1./w);\
-        float dy = pixelSize.y*(1./h);\
+        float dx = pixelSize.x*(1./texSize.x);\
+        float dy = pixelSize.y*(1./texSize.y);\
         vec2 coord = vec2(dx*floor(uv.x/dx),\
         dy*floor(uv.y/dy));\
         float y, u, v, r, g, b;\
@@ -348,6 +347,7 @@ static const char kFragmentShader10[] =
     uniform lowp sampler2D s_textureY;\
     uniform lowp sampler2D s_textureU;\
     uniform lowp sampler2D s_textureV;\
+    uniform vec2 texSize;\
     vec4 YuvToRgb(vec2 uv) {\
         float y, u, v, r, g, b;\
         y = texture2D(s_textureY, uv).r;\
@@ -361,13 +361,11 @@ static const char kFragmentShader10[] =
         return vec4(r, g, b, 1.0);\
     }\
     vec4 CrossStitching(vec2 uv) {\
-        float w = 640.;\
-        float h = 480.;\
         float stitching_size = 5.0;\
         int invert = 0;\
         vec4 color = vec4(0.0);\
         float size = stitching_size;\
-        vec2 cPos = uv * vec2(w, h);\
+        vec2 cPos = uv * vec2(texSize.x, texSize.y);\
         vec2 tlPos = floor(cPos / vec2(size, size));\
         tlPos *= size;\
         int remX = int(mod(cPos.x, size));\
@@ -380,10 +378,10 @@ static const char kFragmentShader10[] =
             if (invert == 1)\
                 color = vec4(0.2, 0.15, 0.05, 1.0);\
             else\
-                color = YuvToRgb(tlPos * vec2(1.0/w, 1.0/h)) * 1.4;\
+                color = YuvToRgb(tlPos * vec2(1.0 / texSize.x, 1.0 / texSize.y)) * 1.4;\
         } else {\
             if (invert == 1)\
-                color = YuvToRgb(tlPos * vec2(1.0/w, 1.0/h)) * 1.4;\
+                color = YuvToRgb(tlPos * vec2(1.0 / texSize.x, 1.0 / texSize.y)) * 1.4;\
             else\
                 color = vec4(0.0, 0.0, 0.0, 1.0);\
         }\
@@ -401,6 +399,7 @@ static const char kFragmentShader11[] =
     uniform lowp sampler2D s_textureY;\
     uniform lowp sampler2D s_textureU;\
     uniform lowp sampler2D s_textureV;\
+    uniform vec2 texSize;\
     vec4 YuvToRgb(vec2 uv) {\
         float y, u, v, r, g, b;\
         y = texture2D(s_textureY, uv).r;\
@@ -416,7 +415,7 @@ static const char kFragmentShader11[] =
     void main() {\
         vec4 color;\
         color.rgb = vec3(0.5);\
-        vec2 onePixel = vec2(1.0 / 480.0, 1.0 / 320.0);\
+        vec2 onePixel = vec2(1.0 / texSize.x, 1.0 / texSize.y);\
         color -= YuvToRgb(v_texcoord - onePixel) * 5.0;\
         color += YuvToRgb(v_texcoord + onePixel) * 5.0;\
         color.rgb = vec3((color.r + color.g + color.b) / 3.0);\
@@ -431,6 +430,7 @@ static const char kFragmentShader12[] =
     uniform lowp sampler2D s_textureY;\
     uniform lowp sampler2D s_textureU;\
     uniform lowp sampler2D s_textureV;\
+    uniform vec2 texSize;\
     vec4 YuvToRgb(vec2 uv) {\
         float y, u, v, r, g, b;\
         y = texture2D(s_textureY, uv).r;\
@@ -444,7 +444,6 @@ static const char kFragmentShader12[] =
         return vec4(r, g, b, 1.0);\
     }\
     void main() {\
-        vec2 texSize = vec2(640, 480);\
         vec2 pos = vec2(v_texcoord.x, 1.0 - v_texcoord.y);\
         vec2 onePixel = vec2(1, 1) / texSize;\
         vec4 color = vec4(0);\
