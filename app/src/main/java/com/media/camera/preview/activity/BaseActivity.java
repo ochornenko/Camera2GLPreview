@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.DisplayMetrics;
 import android.util.Size;
 import android.view.MotionEvent;
 import android.widget.TextView;
@@ -32,9 +33,13 @@ public abstract class BaseActivity extends FragmentActivity implements PreviewFr
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+
         mPreview = new VideoCameraPreview(this);
         mDetector = new SimpleGestureFilter(this, this);
         mResolutionDialog = new ResolutionDialog(this);
+        mPreview.init(displayMetrics.widthPixels, displayMetrics.heightPixels);
     }
 
     @Override

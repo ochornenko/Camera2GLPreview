@@ -49,19 +49,19 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
     private Semaphore mCameraOpenCloseLock = new Semaphore(1);
     private Integer mSensorOrientation;
     private List<Size> mOutputSizes = new ArrayList<>();
-    private int mWidth = 640;
-    private int mHeight = 480;
+    private Size mPreviewSize;
 
     public VideoCameraPreview(Context context) {
         super(context);
 
         mContext = context;
-
-        getHolder().addCallback(this);
-
         mVideoCapture = new VideoCapture((PreviewFrameHandler) context);
-
+        getHolder().addCallback(this);
         setVisibility(View.GONE);
+    }
+
+    public void init(int w, int h) {
+        mPreviewSize = getOptimalPreviewSize(w, h);
     }
 
     public void surfaceCreated(SurfaceHolder holder) {
@@ -73,8 +73,8 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
     }
 
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
-        if (null == mImageReader) {
-            mImageReader = ImageReader.newInstance(mWidth, mHeight, ImageFormat.YUV_420_888, 2);
+        if (null == mImageReader && null != mPreviewSize) {
+            mImageReader = ImageReader.newInstance(mPreviewSize.getWidth(), mPreviewSize.getHeight(), ImageFormat.YUV_420_888, 2);
             mImageReader.setOnImageAvailableListener(mVideoCapture, mBackgroundHandler);
             openCamera();
         }
@@ -100,8 +100,7 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
     }
 
     public void changeResolution(Size size) {
-        mWidth = size.getWidth();
-        mHeight = size.getHeight();
+        mPreviewSize = size;
 
         stopCamera();
         startCamera();
@@ -122,22 +121,6 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
         try {
             if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
                 throw new RuntimeException("Time out waiting to lock camera opening.");
-            }
-            for (String cameraId : manager.getCameraIdList()) {
-                CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
-
-                // We don't use a front facing camera in this sample.
-                Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-                if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
-                    continue;
-                }
-                StreamConfigurationMap streamConfigs = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-                if (streamConfigs != null) {
-                    mOutputSizes = Arrays.asList(streamConfigs.getOutputSizes(SurfaceTexture.class));
-                }
-
-                mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
-                mCameraId = cameraId;
             }
             manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
         } catch (CameraAccessException e) {
@@ -272,4 +255,65 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
             Log.e(TAG, "onConfigureFailed");
         }
     };
+
+    public Size getOptimalPreviewSize(int w, int h) {
+        CameraManager manager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
+        try {
+            for (String cameraId : manager.getCameraIdList()) {
+                CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
+
+                // We don't use a front facing camera in this sample.
+                Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+                if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
+                    continue;
+                }
+                StreamConfigurationMap streamConfigs = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+                if (streamConfigs != null) {
+                    mOutputSizes = Arrays.asList(streamConfigs.getOutputSizes(SurfaceTexture.class));
+                }
+                mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+                mCameraId = cameraId;
+            }
+        } catch (CameraAccessException e) {
+            Log.e(TAG, "Cannot access the camera." + e.toString());
+        }
+
+        // Use a very small tolerance because we want an exact match.
+        final double ASPECT_TOLERANCE = 0.1;
+        double targetRatio = (double) w / h;
+        if (mOutputSizes == null)
+            return null;
+
+        Size optimalSize = null;
+
+        // Start with max value and refine as we iterate over available preview sizes. This is the
+        // minimum difference between view and camera height.
+        double minDiff = Double.MAX_VALUE;
+
+        // Try to find a preview size that matches aspect ratio and the target view size.
+        // Iterate over all available sizes and pick the largest size that can fit in the view and
+        // still maintain the aspect ratio.
+        for (Size size : mOutputSizes) {
+            double ratio = (double) size.getWidth() / size.getHeight();
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE)
+                continue;
+            if (Math.abs(size.getHeight() - h) < minDiff) {
+                optimalSize = size;
+                minDiff = Math.abs(size.getHeight() - h);
+            }
+        }
+
+        // Cannot find preview size that matches the aspect ratio, ignore the requirement
+        if (optimalSize == null) {
+            minDiff = Double.MAX_VALUE;
+            for (Size size : mOutputSizes) {
+                if (Math.abs(size.getHeight() - h) < minDiff) {
+                    optimalSize = size;
+                    minDiff = Math.abs(size.getHeight() - h);
+                }
+            }
+        }
+
+        return optimalSize;
+    }
 }
