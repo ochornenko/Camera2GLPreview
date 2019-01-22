@@ -43,8 +43,7 @@ public class VKActivity extends BaseActivity {
 
     @Override
     public void onPreviewFrame(byte[] data, int width, int height) {
-        Integer rotation = mPreview.getSensorOrientation();
-        mVideoRenderer.drawVideoFrame(data, width, height, rotation);
+        mVideoRenderer.drawVideoFrame(data, width, height, getOrientation());
     }
 
     @Override
@@ -53,6 +52,8 @@ public class VKActivity extends BaseActivity {
         switch (direction) {
             case SWIPE_UP:
                 showResolutionDialog(mPreview.getOutputSizes());
+                break;
+            case SWIPE_DOWN:
                 break;
             case SWIPE_RIGHT:
                 break;

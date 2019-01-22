@@ -9,7 +9,9 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
 import android.util.Size;
+import android.util.SparseIntArray;
 import android.view.MotionEvent;
+import android.view.Surface;
 import android.widget.TextView;
 
 import com.media.camera.preview.R;
@@ -24,10 +26,18 @@ import java.util.List;
 public abstract class BaseActivity extends FragmentActivity implements PreviewFrameHandler,
         SimpleGestureFilter.SimpleGestureListener {
 
+    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
     protected VideoCameraPreview mPreview;
     protected SimpleGestureFilter mDetector;
     protected ResolutionDialog mResolutionDialog;
     protected int mParams;
+
+    static {
+        ORIENTATIONS.append(Surface.ROTATION_0, 90);
+        ORIENTATIONS.append(Surface.ROTATION_90, 0);
+        ORIENTATIONS.append(Surface.ROTATION_180, 270);
+        ORIENTATIONS.append(Surface.ROTATION_270, 180);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +56,11 @@ public abstract class BaseActivity extends FragmentActivity implements PreviewFr
     public boolean onTouchEvent(MotionEvent event) {
         mDetector.onTouchEvent(event);
         return super.onTouchEvent(event);
+    }
+
+    protected int getOrientation() {
+        int rotation = getWindowManager().getDefaultDisplay().getRotation();
+        return (ORIENTATIONS.get(rotation) + mPreview.getSensorOrientation() + 270) % 360;
     }
 
     public void showResolutionDialog(List<Size> items) {
@@ -93,7 +108,7 @@ public abstract class BaseActivity extends FragmentActivity implements PreviewFr
             @Override
             public void onItemClick(Size item) {
                 dismiss();
-                mPreview.changeResolution(item);
+                mPreview.changeSize(item);
             }
         };
     }

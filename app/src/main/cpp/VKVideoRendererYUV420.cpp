@@ -976,7 +976,7 @@ void VKVideoRendererYUV420::updateUniformBuffers()
 
     mat4f_load_rotation_z(m_rotation + 180, m_ubo.rotation);
 
-    float scaleFactor = aspect_ratio_correction(false, m_backingWidth, m_backingHeight, m_width, m_height);
+    float scaleFactor = aspect_ratio_correction(true, m_backingWidth, m_backingHeight, m_width, m_height);
 
     mat4f_load_scale(scaleFactor, scaleFactor, 1.0f, m_ubo.scale);
 }

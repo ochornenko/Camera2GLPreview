@@ -327,7 +327,7 @@ GLuint GLVideoRendererYUV420::useProgram()
         mat4f_load_rotation_z(m_rotation, rotationZ);
         glUniformMatrix4fv(m_uniformRotation, 1, 0, &rotationZ[0]);
 
-        float scaleFactor = aspect_ratio_correction(false, m_backingWidth, m_backingHeight, m_width, m_height);
+        float scaleFactor = aspect_ratio_correction(true, m_backingWidth, m_backingHeight, m_width, m_height);
 
         GLfloat scale[16];
         mat4f_load_scale(scaleFactor, scaleFactor, 1.0f, scale);

@@ -68,8 +68,7 @@ public class GLActivity extends BaseActivity implements ActivityCompat.OnRequest
 
     @Override
     public void onPreviewFrame(byte[] data, int width, int height) {
-        Integer rotation = mPreview.getSensorOrientation();
-        mVideoRenderer.drawVideoFrame(data, width, height, rotation);
+        mVideoRenderer.drawVideoFrame(data, width, height, getOrientation());
         mVideoRenderer.requestRender();
     }
 
@@ -122,6 +121,8 @@ public class GLActivity extends BaseActivity implements ActivityCompat.OnRequest
         switch (direction) {
             case SWIPE_UP:
                 showResolutionDialog(mPreview.getOutputSizes());
+                break;
+            case SWIPE_DOWN:
                 break;
             case SWIPE_RIGHT:
                 if (mFilter > 0) {
