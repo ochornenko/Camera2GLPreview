@@ -970,13 +970,13 @@ bool VKVideoRendererYUV420::mapMemoryTypeToIndex(uint32_t typeBits, VkFlags requ
 
 void VKVideoRendererYUV420::updateUniformBuffers()
 {
-    float targetAspectRatio = (float)m_height / (float)m_width;
+    float targetAspectRatio = (float)m_width / (float)m_height;
 
-    mat4f_load_ortho(-targetAspectRatio, targetAspectRatio, -1.0f, 1.0f, -1.0f, 1.0f, m_ubo.projection);
+    mat4f_load_ortho(-1.0f, 1.0f, -targetAspectRatio, targetAspectRatio, -1.0f, 1.0f, m_ubo.projection);
 
     mat4f_load_rotation_z(m_rotation + 180, m_ubo.rotation);
 
-    float scaleFactor = aspect_ratio_correction(true, m_backingWidth, m_backingHeight, m_width, m_height);
+    float scaleFactor = aspect_ratio_correction(false, m_backingWidth, m_backingHeight, m_width, m_height);
 
     mat4f_load_scale(scaleFactor, scaleFactor, 1.0f, m_ubo.scale);
 }

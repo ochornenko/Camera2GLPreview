@@ -86,8 +86,8 @@ float aspect_ratio_correction(bool fillScreen, size_t backingWidth, size_t backi
 {
     float backingAspectRatio = (float)backingWidth / (float)backingHeight;
     float targetAspectRatio = (float)width / (float)height;
+    float scalingFactor = 1.0f;
 
-    float scalingFactor;
     if (fillScreen)
     {
         if (backingAspectRatio > targetAspectRatio)
@@ -97,17 +97,6 @@ float aspect_ratio_correction(bool fillScreen, size_t backingWidth, size_t backi
         else
         {
             scalingFactor = (float)backingHeight / (float)height;
-        }
-    }
-    else
-    {
-        if (backingAspectRatio > targetAspectRatio)
-        {
-            scalingFactor =  (float)backingHeight / (float)height;
-        }
-        else
-        {
-            scalingFactor = (float)backingWidth / (float)width;
         }
     }
 
