@@ -11,3 +11,4 @@ local.properties
 .externalNativeBuild
 .cdep
 cdep.sha256
+.cxx
