@@ -3,10 +3,8 @@
 
 #include <shaderc/shaderc.hpp>
 
-shaderc_shader_kind getShadercShaderType(VkShaderStageFlagBits type)
-{
-    switch (type)
-    {
+shaderc_shader_kind getShadercShaderType(VkShaderStageFlagBits type) {
+    switch (type) {
         case VK_SHADER_STAGE_VERTEX_BIT:
             return shaderc_glsl_vertex_shader;
         case VK_SHADER_STAGE_FRAGMENT_BIT:
@@ -27,12 +25,17 @@ shaderc_shader_kind getShadercShaderType(VkShaderStageFlagBits type)
 
 // Create VK shader module from given glsl shader source text
 VkResult buildShader(const char *data, VkShaderStageFlagBits type, VkDevice vkDevice,
-                             VkShaderModule* shaderOut) {
+                     VkShaderModule *shaderOut) {
 
     // compile into spir-V shader
     shaderc_compiler_t compiler = shaderc_compiler_initialize();
-    shaderc_compilation_result_t spvShader = shaderc_compile_into_spv(compiler, data,
-            strlen(data), getShadercShaderType(type), "shaderc_error", "main", nullptr);
+    shaderc_compilation_result_t spvShader = shaderc_compile_into_spv(compiler,
+                                                                      data,
+                                                                      strlen(data),
+                                                                      getShadercShaderType(type),
+                                                                      "shaderc_error",
+                                                                      "main",
+                                                                      nullptr);
     int status = shaderc_result_get_compilation_status(spvShader);
     if (status != shaderc_compilation_status_success) {
         LOGE("compilation status", "error = %d", status);
@@ -43,9 +46,9 @@ VkResult buildShader(const char *data, VkShaderStageFlagBits type, VkDevice vkDe
     VkShaderModuleCreateInfo shaderModuleCreateInfo{
             .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
             .pNext = nullptr,
-            .codeSize = shaderc_result_get_length(spvShader),
-            .pCode = (const uint32_t*)shaderc_result_get_bytes(spvShader),
             .flags = 0,
+            .codeSize = shaderc_result_get_length(spvShader),
+            .pCode = (const uint32_t *) shaderc_result_get_bytes(spvShader)
     };
     VkResult result = vkCreateShaderModule(vkDevice, &shaderModuleCreateInfo, nullptr, shaderOut);
 

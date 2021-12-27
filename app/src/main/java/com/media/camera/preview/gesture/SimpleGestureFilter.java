@@ -13,8 +13,8 @@ public class SimpleGestureFilter extends GestureDetector.SimpleOnGestureListener
     private static final int SWIPE_MIN_DISTANCE = 100;
     private static final int SWIPE_THRESHOLD_VELOCITY = 100;
 
-    private GestureDetector mDetector;
-    private SimpleGestureListener mListener;
+    private final GestureDetector mDetector;
+    private final SimpleGestureListener mListener;
 
     public SimpleGestureFilter(Context context, SimpleGestureListener listener) {
         mDetector = new GestureDetector(context, this);

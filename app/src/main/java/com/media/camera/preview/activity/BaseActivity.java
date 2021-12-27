@@ -89,13 +89,17 @@ public abstract class BaseActivity extends FragmentActivity implements PreviewFr
     }
 
     public class ResolutionDialog extends BaseDialog {
-        private ItemAdapter<Size> mAdapter;
+        private final ItemAdapter<Size> mAdapter;
 
         ResolutionDialog(@NonNull Context context) {
             super(context);
 
             mTextView.setText(R.string.select_resolution);
             ArrayList<Size> items = new ArrayList<>();
+            ItemAdapter.ItemListener<Size> mListener = item -> {
+                dismiss();
+                mPreview.changeSize(item);
+            };
             mAdapter = new ItemAdapter<>(items, mListener, R.layout.size_list_item);
             mRecyclerView.setAdapter(mAdapter);
         }
@@ -103,13 +107,5 @@ public abstract class BaseActivity extends FragmentActivity implements PreviewFr
         void setItems(List<Size> items) {
             mAdapter.setItems(items);
         }
-
-        private ItemAdapter.ItemListener<Size> mListener = new ItemAdapter.ItemListener<Size>() {
-            @Override
-            public void onItemClick(Size item) {
-                dismiss();
-                mPreview.changeSize(item);
-            }
-        };
     }
 }

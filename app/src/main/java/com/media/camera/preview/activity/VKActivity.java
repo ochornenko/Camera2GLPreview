@@ -53,10 +53,6 @@ public class VKActivity extends BaseActivity {
             case SWIPE_UP:
                 showResolutionDialog(mPreview.getOutputSizes());
                 break;
-            case SWIPE_DOWN:
-                break;
-            case SWIPE_RIGHT:
-                break;
             case SWIPE_LEFT:
                 finish();
                 break;

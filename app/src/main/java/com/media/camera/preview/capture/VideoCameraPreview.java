@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-
 /**
  * Created by oleg on 11/2/17.
  */
@@ -38,15 +37,15 @@ import java.util.concurrent.TimeUnit;
 public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Callback {
     private static final String TAG = VideoCameraPreview.class.toString();
 
-    private VideoCapture mVideoCapture;
-    private Context mContext;
+    private final VideoCapture mVideoCapture;
+    private final Context mContext;
+    private final Semaphore mCameraOpenCloseLock = new Semaphore(1);
     private CameraCaptureSession mCaptureSession;
     private CameraDevice mCameraDevice;
     private String mCameraId;
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
     private ImageReader mImageReader;
-    private Semaphore mCameraOpenCloseLock = new Semaphore(1);
     private Integer mSensorOrientation;
     private List<Size> mOutputSizes = new ArrayList<>();
     private Size mPreviewSize;
@@ -69,7 +68,7 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
     }
 
     public void surfaceDestroyed(SurfaceHolder holder) {
-        
+
     }
 
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
@@ -235,7 +234,7 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
     /**
      * Creates a new {@link CameraCaptureSession} for camera preview.
      */
-    private CameraCaptureSession.StateCallback sessionStateCallback = new CameraCaptureSession.StateCallback() {
+    private final CameraCaptureSession.StateCallback sessionStateCallback = new CameraCaptureSession.StateCallback() {
         @Override
         public void onConfigured(@NonNull CameraCaptureSession session) {
             mCaptureSession = session;

@@ -1,35 +1,28 @@
 #include "GLUtils.h"
 #include "Log.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 
-void check_gl_error(const char *op)
-{
-    for (GLint error = glGetError(); error; error = glGetError())
-    {
+void check_gl_error(const char *op) {
+    for (GLint error = glGetError(); error; error = glGetError()) {
         LOGI("after %s() glError (0x%x)\n", op, error);
     }
 }
 
-GLuint load_shader(GLenum shaderType, const char *pSource)
-{
-	GLuint shader = glCreateShader(shaderType);
-    if (shader)
-    {
-        glShaderSource(shader, 1, &pSource, NULL);
+GLuint load_shader(GLenum shaderType, const char *pSource) {
+    GLuint shader = glCreateShader(shaderType);
+    if (shader) {
+        glShaderSource(shader, 1, &pSource, nullptr);
         glCompileShader(shader);
         GLint compiled = 0;
         glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
-        if (!compiled)
-        {
+        if (!compiled) {
             GLint infoLen = 0;
             glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLen);
-            if (infoLen)
-            {
-                char* buf = (char*) malloc((size_t)infoLen);
-                if (buf)
-                {
-                    glGetShaderInfoLog(shader, infoLen, NULL, buf);
+            if (infoLen) {
+                char *buf = (char *) malloc((size_t) infoLen);
+                if (buf) {
+                    glGetShaderInfoLog(shader, infoLen, nullptr, buf);
                     LOGE("Could not compile shader %d:\n%s\n", shaderType, buf);
                     free(buf);
                 }
@@ -42,8 +35,7 @@ GLuint load_shader(GLenum shaderType, const char *pSource)
 }
 
 GLuint create_program(const char *pVertexSource, const char *pFragmentSource, GLuint &vertexShader,
-                      GLuint &pixelShader)
-{
+                      GLuint &pixelShader) {
     vertexShader = load_shader(GL_VERTEX_SHADER, pVertexSource);
     if (!vertexShader) return 0;
 
@@ -51,8 +43,7 @@ GLuint create_program(const char *pVertexSource, const char *pFragmentSource, GL
     if (!pixelShader) return 0;
 
     GLuint program = glCreateProgram();
-    if (program)
-    {
+    if (program) {
         glAttachShader(program, vertexShader);
         check_gl_error("glAttachShader");
         glAttachShader(program, pixelShader);
@@ -67,16 +58,13 @@ GLuint create_program(const char *pVertexSource, const char *pFragmentSource, GL
         glDetachShader(program, pixelShader);
         glDeleteShader(pixelShader);
         pixelShader = 0;
-        if (linkStatus != GL_TRUE)
-        {
+        if (linkStatus != GL_TRUE) {
             GLint bufLength = 0;
             glGetProgramiv(program, GL_INFO_LOG_LENGTH, &bufLength);
-            if (bufLength)
-            {
-                char* buf = (char*) malloc((size_t)bufLength);
-                if (buf)
-                {
-                    glGetProgramInfoLog(program, bufLength, NULL, buf);
+            if (bufLength) {
+                char *buf = (char *) malloc((size_t) bufLength);
+                if (buf) {
+                    glGetProgramInfoLog(program, bufLength, nullptr, buf);
                     LOGE("Could not link program:\n%s\n", buf);
                     free(buf);
                 }
@@ -89,10 +77,8 @@ GLuint create_program(const char *pVertexSource, const char *pFragmentSource, GL
     return program;
 }
 
-void delete_program(GLuint &program)
-{
-    if (program)
-    {
+void delete_program(GLuint &program) {
+    if (program) {
         glUseProgram(0);
         glDeleteProgram(program);
         program = 0;

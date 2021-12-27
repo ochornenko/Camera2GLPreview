@@ -11,8 +11,8 @@ import java.util.List;
 public class ItemAdapter<T> extends RecyclerView.Adapter<ItemAdapter.ViewHolder> {
 
     private List<T> mItems;
-    private ItemListener<T> mListener;
-    private int mLayoutId;
+    private final ItemListener<T> mListener;
+    private final int mLayoutId;
 
     public ItemAdapter(List<T> items, ItemListener<T> listener, int layoutId) {
         mItems = items;
@@ -24,7 +24,7 @@ public class ItemAdapter<T> extends RecyclerView.Adapter<ItemAdapter.ViewHolder>
     @Override
     @SuppressWarnings("unchecked")
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new ViewHolder((RecyclerViewRow<T>)LayoutInflater.from(parent.getContext())
+        return new ViewHolder((RecyclerViewRow<T>) LayoutInflater.from(parent.getContext())
                 .inflate(mLayoutId, parent, false));
     }
 
@@ -32,12 +32,9 @@ public class ItemAdapter<T> extends RecyclerView.Adapter<ItemAdapter.ViewHolder>
     @SuppressWarnings("unchecked")
     public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
         holder.mRow.setData(mItems.get(position));
-        ((View) holder.mRow).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (mListener != null) {
-                    mListener.onItemClick(mItems.get(holder.getAdapterPosition()));
-                }
+        ((View) holder.mRow).setOnClickListener(view -> {
+            if (mListener != null) {
+                mListener.onItemClick(mItems.get(holder.getAdapterPosition()));
             }
         });
     }
@@ -52,7 +49,7 @@ public class ItemAdapter<T> extends RecyclerView.Adapter<ItemAdapter.ViewHolder>
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        private RecyclerViewRow mRow;
+        private final RecyclerViewRow mRow;
 
         ViewHolder(RecyclerViewRow itemView) {
             super((View) itemView);

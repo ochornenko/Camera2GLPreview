@@ -18,16 +18,14 @@
 #define VK_CHECK(x) CALL_VK(x)
 
 VKVideoRendererYUV420::VKVideoRendererYUV420()
-    : texType{ tTexY, tTexU, tTexV }
-    , m_pBuffer(nullptr)
-    , m_indexCount(0)
-    , m_length(0)
-{
+        : texType{tTexY, tTexU, tTexV},
+          m_pBuffer(nullptr),
+          m_indexCount(0),
+          m_length(0) {
     m_deviceInfo.initialized = false;
 }
 
-VKVideoRendererYUV420::~VKVideoRendererYUV420()
-{
+VKVideoRendererYUV420::~VKVideoRendererYUV420() {
     deleteCommandPool();
     deleteGraphicsPipeline();
     deleteTextures();
@@ -42,8 +40,7 @@ VKVideoRendererYUV420::~VKVideoRendererYUV420()
     m_deviceInfo.initialized = false;
 }
 
-void VKVideoRendererYUV420::createRenderPipeline()
-{
+void VKVideoRendererYUV420::createRenderPipeline() {
     createRenderPass();
     createFrameBuffers(); // Create 2 frame buffers.
     createVertexBuffer();
@@ -57,8 +54,7 @@ void VKVideoRendererYUV420::createRenderPipeline()
     m_deviceInfo.initialized = true;
 }
 
-void VKVideoRendererYUV420::init(ANativeWindow* window, size_t width, size_t height)
-{
+void VKVideoRendererYUV420::init(ANativeWindow *window, size_t width, size_t height) {
     m_backingWidth = width;
     m_backingHeight = height;
 
@@ -68,63 +64,61 @@ void VKVideoRendererYUV420::init(ANativeWindow* window, size_t width, size_t hei
     }
 
     VkApplicationInfo appInfo = {
-        .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-        .pNext = nullptr,
-        .apiVersion = VK_MAKE_VERSION(1, 0, 0),
-        .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
-        .engineVersion = VK_MAKE_VERSION(1, 0, 0),
-        .pApplicationName = "camera2GLPreview",
-        .pEngineName = "camera",
+            .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+            .pNext = nullptr,
+            .pApplicationName = "camera2GLPreview",
+            .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
+            .pEngineName = "camera",
+            .engineVersion = VK_MAKE_VERSION(1, 0, 0),
+            .apiVersion = VK_MAKE_VERSION(1, 0, 0),
     };
 
     createDevice(window, &appInfo);
     createSwapChain();
 }
 
-void VKVideoRendererYUV420::render()
-{
+void VKVideoRendererYUV420::render() {
     uint32_t nextIndex;
     // Get the framebuffer index we should draw in
     CALL_VK(vkAcquireNextImageKHR(m_deviceInfo.device, m_swapchainInfo.swapchain, UINT64_MAX,
-                                  m_render.semaphore, VK_NULL_HANDLE, &nextIndex));
-    CALL_VK(vkResetFences(m_deviceInfo.device, 1, &m_render.fence));
+                                  m_render.semaphore, VK_NULL_HANDLE, &nextIndex))
+    CALL_VK(vkResetFences(m_deviceInfo.device, 1, &m_render.fence))
 
     VkPipelineStageFlags waitStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    VkSubmitInfo submitInfo {
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .pNext = nullptr,
-        .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &m_render.semaphore,
-        .pWaitDstStageMask = &waitStageMask,
-        .commandBufferCount = 1,
-        .pCommandBuffers = &m_render.cmdBuffer[nextIndex],
-        .signalSemaphoreCount = 0,
-        .pSignalSemaphores = nullptr
+    VkSubmitInfo submitInfo{
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .pNext = nullptr,
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &m_render.semaphore,
+            .pWaitDstStageMask = &waitStageMask,
+            .commandBufferCount = 1,
+            .pCommandBuffers = &m_render.cmdBuffer[nextIndex],
+            .signalSemaphoreCount = 0,
+            .pSignalSemaphores = nullptr
     };
-    CALL_VK(vkQueueSubmit(m_deviceInfo.queue, 1, &submitInfo, m_render.fence));
-    CALL_VK(vkWaitForFences(m_deviceInfo.device, 1, &m_render.fence, VK_TRUE, 100000000));
+    CALL_VK(vkQueueSubmit(m_deviceInfo.queue, 1, &submitInfo, m_render.fence))
+    CALL_VK(vkWaitForFences(m_deviceInfo.device, 1, &m_render.fence, VK_TRUE, 100000000))
 
     VkResult result;
-    VkPresentInfoKHR presentInfo {
-        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-        .pNext = nullptr,
-        .swapchainCount = 1,
-        .pSwapchains = &m_swapchainInfo.swapchain,
-        .pImageIndices = &nextIndex,
-        .waitSemaphoreCount = 0,
-        .pWaitSemaphores = nullptr,
-        .pResults = &result,
+    VkPresentInfoKHR presentInfo{
+            .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+            .pNext = nullptr,
+            .waitSemaphoreCount = 0,
+            .pWaitSemaphores = nullptr,
+            .swapchainCount = 1,
+            .pSwapchains = &m_swapchainInfo.swapchain,
+            .pImageIndices = &nextIndex,
+            .pResults = &result,
     };
     vkQueuePresentKHR(m_deviceInfo.queue, &presentInfo);
 }
 
-void VKVideoRendererYUV420::updateFrame(const video_frame& frame)
-{
+void VKVideoRendererYUV420::updateFrame(const video_frame &frame) {
 
 }
 
-void VKVideoRendererYUV420::draw(uint8_t *buffer, size_t length, size_t width, size_t height, int rotation)
-{
+void VKVideoRendererYUV420::draw(uint8_t *buffer, size_t length, size_t width, size_t height,
+                                 float rotation) {
     m_pBuffer = buffer;
     m_length = length;
     m_rotation = rotation;
@@ -157,94 +151,88 @@ void VKVideoRendererYUV420::draw(uint8_t *buffer, size_t length, size_t width, s
     }
 }
 
-void VKVideoRendererYUV420::setParameters(uint32_t params)
-{
+void VKVideoRendererYUV420::setParameters(uint32_t params) {
     m_params = params;
 }
 
-uint32_t VKVideoRendererYUV420::getParameters()
-{
+uint32_t VKVideoRendererYUV420::getParameters() {
     return m_params;
 }
 
-bool VKVideoRendererYUV420::createTextures()
-{
+bool VKVideoRendererYUV420::createTextures() {
     for (int i = 0; i < kTextureCount; i++) {
-        loadTexture(m_pBuffer, texType[i], m_width, m_height, &textures[i], VK_IMAGE_USAGE_SAMPLED_BIT,
+        loadTexture(m_pBuffer, texType[i], m_width, m_height, &textures[i],
+                    VK_IMAGE_USAGE_SAMPLED_BIT,
                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
-        const VkSamplerCreateInfo sampler {
-            .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-            .pNext = nullptr,
-            .magFilter = VK_FILTER_NEAREST,
-            .minFilter = VK_FILTER_NEAREST,
-            .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
-            .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-            .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-            .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-            .mipLodBias = 0.0f,
-            .maxAnisotropy = 1,
-            .compareOp = VK_COMPARE_OP_NEVER,
-            .minLod = 0.0f,
-            .maxLod = 0.0f,
-            .borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE,
-            .unnormalizedCoordinates = VK_FALSE,
+        const VkSamplerCreateInfo sampler{
+                .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+                .pNext = nullptr,
+                .magFilter = VK_FILTER_NEAREST,
+                .minFilter = VK_FILTER_NEAREST,
+                .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+                .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                .mipLodBias = 0.0f,
+                .maxAnisotropy = 1,
+                .compareOp = VK_COMPARE_OP_NEVER,
+                .minLod = 0.0f,
+                .maxLod = 0.0f,
+                .borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE,
+                .unnormalizedCoordinates = VK_FALSE,
         };
-        VkImageViewCreateInfo view {
-            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-            .pNext = nullptr,
-            .image = VK_NULL_HANDLE,
-            .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .format = kTextureFormat,
-            .components = {
-                    VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G,
-                    VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A},
-            .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
-            .flags = 0,
+        VkImageViewCreateInfo view{
+                .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+                .pNext = nullptr,
+                .flags = 0,
+                .image = VK_NULL_HANDLE,
+                .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                .format = kTextureFormat,
+                .components = {
+                        VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G,
+                        VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A},
+                .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
         };
 
-        CALL_VK(vkCreateSampler(m_deviceInfo.device, &sampler, nullptr, &textures[i].sampler));
+        CALL_VK(vkCreateSampler(m_deviceInfo.device, &sampler, nullptr, &textures[i].sampler))
         view.image = textures[i].image;
-        CALL_VK(vkCreateImageView(m_deviceInfo.device, &view, nullptr, &textures[i].view));
+        CALL_VK(vkCreateImageView(m_deviceInfo.device, &view, nullptr, &textures[i].view))
     }
 
     return true;
 }
 
-bool VKVideoRendererYUV420::updateTextures()
-{
+bool VKVideoRendererYUV420::updateTextures() {
     for (int i = 0; i < kTextureCount; i++) {
-        size_t offset = getBufferOffset(&textures[i], texType[i], m_width, m_height);;
+        size_t offset = getBufferOffset(&textures[i], texType[i], m_width, m_height);
         copyTextureData(&textures[i], m_pBuffer + offset);
     }
     return true;
 }
 
-void VKVideoRendererYUV420::deleteTextures()
-{
-    for (int i = 0; i < kTextureCount; i++) {
-        vkDestroyImageView(m_deviceInfo.device, textures[i].view, nullptr);
-        vkDestroyImage(m_deviceInfo.device, textures[i].image, nullptr);
-        vkDestroySampler(m_deviceInfo.device, textures[i].sampler, nullptr);
-        vkUnmapMemory(m_deviceInfo.device, textures[i].mem);
-        vkFreeMemory(m_deviceInfo.device, textures[i].mem, nullptr);
+void VKVideoRendererYUV420::deleteTextures() {
+    for (auto &texture : textures) {
+        vkDestroyImageView(m_deviceInfo.device, texture.view, nullptr);
+        vkDestroyImage(m_deviceInfo.device, texture.image, nullptr);
+        vkDestroySampler(m_deviceInfo.device, texture.sampler, nullptr);
+        vkUnmapMemory(m_deviceInfo.device, texture.mem);
+        vkFreeMemory(m_deviceInfo.device, texture.mem, nullptr);
     }
 }
 
-void VKVideoRendererYUV420::deleteRenderPass()
-{
+void VKVideoRendererYUV420::deleteRenderPass() const {
     vkDestroyRenderPass(m_deviceInfo.device, m_render.renderPass, nullptr);
 }
 
-int VKVideoRendererYUV420::createProgram(const char *pVertexSource, const char *pFragmentSource)
-{
+int VKVideoRendererYUV420::createProgram(const char *pVertexSource, const char *pFragmentSource) {
     return createGraphicsPipeline(pVertexSource, pFragmentSource);
 }
 
-void VKVideoRendererYUV420::createDevice(ANativeWindow* platformWindow, VkApplicationInfo* appInfo)
-{
-    std::vector<const char*> instance_extensions;
-    std::vector<const char*> device_extensions;
+void
+VKVideoRendererYUV420::createDevice(ANativeWindow *platformWindow, VkApplicationInfo *appInfo) {
+    std::vector<const char *> instance_extensions;
+    std::vector<const char *> device_extensions;
 
     instance_extensions.push_back("VK_KHR_surface");
     instance_extensions.push_back("VK_KHR_android_surface");
@@ -253,35 +241,36 @@ void VKVideoRendererYUV420::createDevice(ANativeWindow* platformWindow, VkApplic
 
     // Create the Vulkan instance
     VkInstanceCreateInfo instanceCreateInfo{
-        .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-        .pNext = nullptr,
-        .pApplicationInfo = appInfo,
-        .enabledExtensionCount = static_cast<uint32_t>(instance_extensions.size()),
-        .ppEnabledExtensionNames = instance_extensions.data(),
-        .enabledLayerCount = 0,
-        .ppEnabledLayerNames = nullptr,
+            .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+            .pNext = nullptr,
+            .pApplicationInfo = appInfo,
+            .enabledLayerCount = 0,
+            .ppEnabledLayerNames = nullptr,
+            .enabledExtensionCount = static_cast<uint32_t>(instance_extensions.size()),
+            .ppEnabledExtensionNames = instance_extensions.data(),
     };
-    CALL_VK(vkCreateInstance(&instanceCreateInfo, nullptr, &m_deviceInfo.instance));
+    CALL_VK(vkCreateInstance(&instanceCreateInfo, nullptr, &m_deviceInfo.instance))
     VkAndroidSurfaceCreateInfoKHR createInfo{
-        .sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR,
-        .pNext = nullptr,
-        .flags = 0,
-        .window = platformWindow
+            .sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR,
+            .pNext = nullptr,
+            .flags = 0,
+            .window = platformWindow
     };
 
     CALL_VK(vkCreateAndroidSurfaceKHR(m_deviceInfo.instance, &createInfo, nullptr,
-                                      &m_deviceInfo.surface));
+                                      &m_deviceInfo.surface))
     // Find one GPU to use:
     // On Android, every GPU device is equal -- supporting
     // graphics/compute/present
     // for this sample, we use the very first GPU device found on the system
     uint32_t gpuCount = 0;
-    CALL_VK(vkEnumeratePhysicalDevices(m_deviceInfo.instance, &gpuCount, nullptr));
+    CALL_VK(vkEnumeratePhysicalDevices(m_deviceInfo.instance, &gpuCount, nullptr))
     VkPhysicalDevice tmpGpus[gpuCount];
-    CALL_VK(vkEnumeratePhysicalDevices(m_deviceInfo.instance, &gpuCount, tmpGpus));
+    CALL_VK(vkEnumeratePhysicalDevices(m_deviceInfo.instance, &gpuCount, tmpGpus))
     m_deviceInfo.physicalDevice = tmpGpus[0];  // Pick up the first GPU Device
 
-    vkGetPhysicalDeviceMemoryProperties(m_deviceInfo.physicalDevice, &m_deviceInfo.memoryProperties);
+    vkGetPhysicalDeviceMemoryProperties(m_deviceInfo.physicalDevice,
+                                        &m_deviceInfo.memoryProperties);
 
     // Find a GFX queue family
     uint32_t queueFamilyCount;
@@ -307,27 +296,28 @@ void VKVideoRendererYUV420::createDevice(ANativeWindow* platformWindow, VkApplic
             1.0f,
     };
     VkDeviceQueueCreateInfo queueCreateInfo{
-        .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-        .queueCount = 1,
-        .queueFamilyIndex = m_deviceInfo.queueFamilyIndex,
-        .pQueuePriorities = priorities,
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
+            .queueFamilyIndex = m_deviceInfo.queueFamilyIndex,
+            .queueCount = 1,
+            .pQueuePriorities = priorities,
     };
 
     VkDeviceCreateInfo deviceCreateInfo{
-        .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = nullptr,
-        .queueCreateInfoCount = 1,
-        .pQueueCreateInfos = &queueCreateInfo,
-        .enabledLayerCount = 0,
-        .ppEnabledLayerNames = nullptr,
-        .enabledExtensionCount = static_cast<uint32_t>(device_extensions.size()),
-        .ppEnabledExtensionNames = device_extensions.data(),
-        .pEnabledFeatures = nullptr,
+            .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+            .pNext = nullptr,
+            .queueCreateInfoCount = 1,
+            .pQueueCreateInfos = &queueCreateInfo,
+            .enabledLayerCount = 0,
+            .ppEnabledLayerNames = nullptr,
+            .enabledExtensionCount = static_cast<uint32_t>(device_extensions.size()),
+            .ppEnabledExtensionNames = device_extensions.data(),
+            .pEnabledFeatures = nullptr,
     };
 
-    CALL_VK(vkCreateDevice(m_deviceInfo.physicalDevice, &deviceCreateInfo, nullptr, &m_deviceInfo.device));
+    CALL_VK(vkCreateDevice(m_deviceInfo.physicalDevice, &deviceCreateInfo, nullptr,
+                           &m_deviceInfo.device))
     vkGetDeviceQueue(m_deviceInfo.device, 0, 0, &m_deviceInfo.queue);
 }
 
@@ -345,7 +335,8 @@ void VKVideoRendererYUV420::createSwapChain() {
     vkGetPhysicalDeviceSurfaceFormatsKHR(m_deviceInfo.physicalDevice, m_deviceInfo.surface,
                                          &formatCount, nullptr);
 
-    std::unique_ptr<VkSurfaceFormatKHR[]> formats = std::make_unique<VkSurfaceFormatKHR[]>(formatCount);
+    std::unique_ptr<VkSurfaceFormatKHR[]> formats = std::make_unique<VkSurfaceFormatKHR[]>(
+            formatCount);
 
     vkGetPhysicalDeviceSurfaceFormatsKHR(m_deviceInfo.physicalDevice, m_deviceInfo.surface,
                                          &formatCount, formats.get());
@@ -359,34 +350,33 @@ void VKVideoRendererYUV420::createSwapChain() {
     m_swapchainInfo.displayFormat = formats[chosenFormat].format;
 
     // Create a swap chain (here we choose the minimum available number of surface in the chain)
-    VkSwapchainCreateInfoKHR swapchainCreateInfo {
-        .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-        .pNext = nullptr,
-        .surface = m_deviceInfo.surface,
-        .minImageCount = surfaceCapabilities.minImageCount,
-        .imageFormat = formats[chosenFormat].format,
-        .imageColorSpace = formats[chosenFormat].colorSpace,
-        .imageExtent = surfaceCapabilities.currentExtent,
-        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-        .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
-        .imageArrayLayers = 1,
-        .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .queueFamilyIndexCount = 1,
-        .pQueueFamilyIndices = &m_deviceInfo.queueFamilyIndex,
-        .presentMode = VK_PRESENT_MODE_FIFO_KHR,
-        .oldSwapchain = VK_NULL_HANDLE,
-        .clipped = VK_FALSE,
+    VkSwapchainCreateInfoKHR swapchainCreateInfo{
+            .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+            .pNext = nullptr,
+            .surface = m_deviceInfo.surface,
+            .minImageCount = surfaceCapabilities.minImageCount,
+            .imageFormat = formats[chosenFormat].format,
+            .imageColorSpace = formats[chosenFormat].colorSpace,
+            .imageExtent = surfaceCapabilities.currentExtent,
+            .imageArrayLayers = 1,
+            .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+            .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+            .queueFamilyIndexCount = 1,
+            .pQueueFamilyIndices = &m_deviceInfo.queueFamilyIndex,
+            .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+            .presentMode = VK_PRESENT_MODE_FIFO_KHR,
+            .clipped = VK_FALSE,
+            .oldSwapchain = VK_NULL_HANDLE,
     };
     CALL_VK(vkCreateSwapchainKHR(m_deviceInfo.device, &swapchainCreateInfo, nullptr,
-                                 &m_swapchainInfo.swapchain));
+                                 &m_swapchainInfo.swapchain))
 
     // Get the length of the created swap chain
     CALL_VK(vkGetSwapchainImagesKHR(m_deviceInfo.device, m_swapchainInfo.swapchain,
-                                    &m_swapchainInfo.swapchainLength, nullptr));
+                                    &m_swapchainInfo.swapchainLength, nullptr))
 }
 
-void VKVideoRendererYUV420::deleteSwapChain()
-{
+void VKVideoRendererYUV420::deleteSwapChain() const {
     for (int i = 0; i < m_swapchainInfo.swapchainLength; i++) {
         vkDestroyFramebuffer(m_deviceInfo.device, m_swapchainInfo.framebuffers[i], nullptr);
         vkDestroyImageView(m_deviceInfo.device, m_swapchainInfo.displayViews[i], nullptr);
@@ -395,16 +385,15 @@ void VKVideoRendererYUV420::deleteSwapChain()
     vkDestroySwapchainKHR(m_deviceInfo.device, m_swapchainInfo.swapchain, nullptr);
 }
 
-void VKVideoRendererYUV420::deleteCommandPool()
-{
-    vkFreeCommandBuffers(m_deviceInfo.device, m_render.cmdPool, m_render.cmdBufferLen, m_render.cmdBuffer.get());
+void VKVideoRendererYUV420::deleteCommandPool() const {
+    vkFreeCommandBuffers(m_deviceInfo.device, m_render.cmdPool, m_render.cmdBufferLen,
+                         m_render.cmdBuffer.get());
     vkDestroyCommandPool(m_deviceInfo.device, m_render.cmdPool, nullptr);
     vkDestroyFence(m_deviceInfo.device, m_render.fence, nullptr);
     vkDestroySemaphore(m_deviceInfo.device, m_render.semaphore, nullptr);
 }
 
-void VKVideoRendererYUV420::deleteGraphicsPipeline()
-{
+void VKVideoRendererYUV420::deleteGraphicsPipeline() {
     if (m_gfxPipeline.pipeline == VK_NULL_HANDLE) return;
     vkDestroyPipeline(m_deviceInfo.device, m_gfxPipeline.pipeline, nullptr);
     vkDestroyPipelineCache(m_deviceInfo.device, m_gfxPipeline.cache, nullptr);
@@ -413,90 +402,91 @@ void VKVideoRendererYUV420::deleteGraphicsPipeline()
     vkDestroyPipelineLayout(m_deviceInfo.device, m_gfxPipeline.layout, nullptr);
 }
 
-void VKVideoRendererYUV420::createFrameBuffers(VkImageView depthView)
-{
+void VKVideoRendererYUV420::createFrameBuffers(VkImageView depthView) {
     // query display attachment to swapchain
     uint32_t swapchainImagesCount = 0;
     CALL_VK(vkGetSwapchainImagesKHR(m_deviceInfo.device, m_swapchainInfo.swapchain,
-                                    &swapchainImagesCount, nullptr));
+                                    &swapchainImagesCount, nullptr))
     m_swapchainInfo.displayImages = std::make_unique<VkImage[]>(swapchainImagesCount);
     CALL_VK(vkGetSwapchainImagesKHR(m_deviceInfo.device, m_swapchainInfo.swapchain,
                                     &swapchainImagesCount,
-                                    m_swapchainInfo.displayImages.get()));
+                                    m_swapchainInfo.displayImages.get()))
 
     // create image view for each swapchain image
     m_swapchainInfo.displayViews = std::make_unique<VkImageView[]>(swapchainImagesCount);
     for (uint32_t i = 0; i < swapchainImagesCount; i++) {
         VkImageViewCreateInfo viewCreateInfo = {
-            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-            .pNext = nullptr,
-            .image = m_swapchainInfo.displayImages[i],
-            .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .format = m_swapchainInfo.displayFormat,
-            .components = {
-                .r = VK_COMPONENT_SWIZZLE_R,
-                .g = VK_COMPONENT_SWIZZLE_G,
-                .b = VK_COMPONENT_SWIZZLE_B,
-                .a = VK_COMPONENT_SWIZZLE_A,
-            },
-            .subresourceRange = {
-                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .baseMipLevel = 0,
-                .levelCount = 1,
-                .baseArrayLayer = 0,
-                .layerCount = 1,
-            },
-            .flags = 0,
+                .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+                .pNext = nullptr,
+                .flags = 0,
+                .image = m_swapchainInfo.displayImages[i],
+                .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                .format = m_swapchainInfo.displayFormat,
+                .components = {
+                        .r = VK_COMPONENT_SWIZZLE_R,
+                        .g = VK_COMPONENT_SWIZZLE_G,
+                        .b = VK_COMPONENT_SWIZZLE_B,
+                        .a = VK_COMPONENT_SWIZZLE_A,
+                },
+                .subresourceRange = {
+                        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                        .baseMipLevel = 0,
+                        .levelCount = 1,
+                        .baseArrayLayer = 0,
+                        .layerCount = 1,
+                },
         };
-        CALL_VK(vkCreateImageView(m_deviceInfo.device, &viewCreateInfo, nullptr, &m_swapchainInfo.displayViews[i]));
+        CALL_VK(vkCreateImageView(m_deviceInfo.device, &viewCreateInfo, nullptr,
+                                  &m_swapchainInfo.displayViews[i]))
     }
 
     // create a framebuffer from each swapchain image
-    m_swapchainInfo.framebuffers = std::make_unique<VkFramebuffer[]>(m_swapchainInfo.swapchainLength);
+    m_swapchainInfo.framebuffers = std::make_unique<VkFramebuffer[]>(
+            m_swapchainInfo.swapchainLength);
     for (uint32_t i = 0; i < m_swapchainInfo.swapchainLength; i++) {
         VkImageView attachments[2] = {
                 m_swapchainInfo.displayViews[i],
                 depthView,
         };
         VkFramebufferCreateInfo fbCreateInfo{
-            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-            .pNext = nullptr,
-            .renderPass = m_render.renderPass,
-            .layers = 1,
-            .attachmentCount = 1,  // 2 if using depth
-            .pAttachments = attachments,
-            .width = static_cast<uint32_t>(m_swapchainInfo.displaySize.width),
-            .height = static_cast<uint32_t>(m_swapchainInfo.displaySize.height),
+                .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+                .pNext = nullptr,
+                .renderPass = m_render.renderPass,
+                .attachmentCount = 1,  // 2 if using depth
+                .pAttachments = attachments,
+                .width = static_cast<uint32_t>(m_swapchainInfo.displaySize.width),
+                .height = static_cast<uint32_t>(m_swapchainInfo.displaySize.height),
+                .layers = 1,
         };
         fbCreateInfo.attachmentCount = (depthView == VK_NULL_HANDLE ? 1 : 2);
 
-        CALL_VK(vkCreateFramebuffer(m_deviceInfo.device, &fbCreateInfo, nullptr, &m_swapchainInfo.framebuffers[i]));
+        CALL_VK(vkCreateFramebuffer(m_deviceInfo.device, &fbCreateInfo, nullptr,
+                                    &m_swapchainInfo.framebuffers[i]))
     }
 }
 
 // Helper function to transition color buffer layout
 void VKVideoRendererYUV420::setImageLayout(VkCommandBuffer cmdBuffer, VkImage image,
-                    VkImageLayout oldImageLayout, VkImageLayout newImageLayout,
-                    VkPipelineStageFlags srcStages,
-                    VkPipelineStageFlags destStages)
-{
+                                           VkImageLayout oldImageLayout,
+                                           VkImageLayout newImageLayout,
+                                           VkPipelineStageFlags srcStages,
+                                           VkPipelineStageFlags destStages) {
     VkImageMemoryBarrier imageMemoryBarrier = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-        .pNext = NULL,
-        .srcAccessMask = 0,
-        .dstAccessMask = 0,
-        .oldLayout = oldImageLayout,
-        .newLayout = newImageLayout,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = image,
-        .subresourceRange =
-            {
-                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .baseMipLevel = 0,
-                .levelCount = 1,
-                .baseArrayLayer = 0,
-                .layerCount = 1,
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+            .pNext = nullptr,
+            .srcAccessMask = 0,
+            .dstAccessMask = 0,
+            .oldLayout = oldImageLayout,
+            .newLayout = newImageLayout,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .image = image,
+            .subresourceRange = {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0,
+                    .levelCount = 1,
+                    .baseArrayLayer = 0,
+                    .layerCount = 1,
             },
     };
 
@@ -543,149 +533,150 @@ void VKVideoRendererYUV420::setImageLayout(VkCommandBuffer cmdBuffer, VkImage im
             break;
     }
 
-    vkCmdPipelineBarrier(cmdBuffer, srcStages, destStages, 0, 0, NULL, 0, NULL, 1,
+    vkCmdPipelineBarrier(cmdBuffer, srcStages, destStages, 0, 0, nullptr, 0, nullptr, 1,
                          &imageMemoryBarrier);
 }
 
 // Create Graphics Pipeline
-VkResult VKVideoRendererYUV420::createGraphicsPipeline(const char *pVertexSource, const char *pFragmentSource)
-{
+VkResult VKVideoRendererYUV420::createGraphicsPipeline(const char *pVertexSource,
+                                                       const char *pFragmentSource) {
     memset(&m_gfxPipeline, 0, sizeof(m_gfxPipeline));
 
-    const VkDescriptorSetLayoutBinding descriptorSetLayoutBinding[2] {
-        {
-            .binding = 0,
-            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = 1,
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .descriptorCount = kTextureCount,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        }};
+    const VkDescriptorSetLayoutBinding descriptorSetLayoutBinding[2]{
+            {
+                    .binding = 0,
+                    .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                    .descriptorCount = 1,
+                    .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+                    .pImmutableSamplers = nullptr
+            },
+            {
+                    .binding = 1,
+                    .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                    .descriptorCount = kTextureCount,
+                    .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+                    .pImmutableSamplers = nullptr
+            }};
     const VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .pNext = nullptr,
-        .bindingCount = 2,
-        .pBindings = descriptorSetLayoutBinding,
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+            .pNext = nullptr,
+            .bindingCount = 2,
+            .pBindings = descriptorSetLayoutBinding,
     };
     CALL_VK(vkCreateDescriptorSetLayout(m_deviceInfo.device,
                                         &descriptorSetLayoutCreateInfo, nullptr,
-                                        &m_gfxPipeline.descLayout));
+                                        &m_gfxPipeline.descLayout))
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .pNext = nullptr,
-        .setLayoutCount = 1,
-        .pSetLayouts = &m_gfxPipeline.descLayout,
-        .pushConstantRangeCount = 0,
-        .pPushConstantRanges = nullptr,
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+            .pNext = nullptr,
+            .setLayoutCount = 1,
+            .pSetLayouts = &m_gfxPipeline.descLayout,
+            .pushConstantRangeCount = 0,
+            .pPushConstantRanges = nullptr,
     };
     CALL_VK(vkCreatePipelineLayout(m_deviceInfo.device, &pipelineLayoutCreateInfo,
-                                   nullptr, &m_gfxPipeline.layout));
+                                   nullptr, &m_gfxPipeline.layout))
 
     // No dynamic state in that tutorial
     VkPipelineDynamicStateCreateInfo dynamicStateInfo{
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .dynamicStateCount = 0,
-        .pDynamicStates = nullptr};
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+            .pNext = nullptr,
+            .dynamicStateCount = 0,
+            .pDynamicStates = nullptr};
 
     VkShaderModule vertexShader, fragmentShader;
     buildShader(pVertexSource, VK_SHADER_STAGE_VERTEX_BIT, m_deviceInfo.device, &vertexShader);
-    buildShader(pFragmentSource, VK_SHADER_STAGE_FRAGMENT_BIT, m_deviceInfo.device, &fragmentShader);
+    buildShader(pFragmentSource, VK_SHADER_STAGE_FRAGMENT_BIT, m_deviceInfo.device,
+                &fragmentShader);
     // Specify vertex and fragment shader stages
-    VkPipelineShaderStageCreateInfo shaderStages[2] {
-        {
-            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-            .pNext = nullptr,
-            .stage = VK_SHADER_STAGE_VERTEX_BIT,
-            .module = vertexShader,
-            .pSpecializationInfo = nullptr,
-            .flags = 0,
-            .pName = "main",
-        },
-        {
-            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-            .pNext = nullptr,
-            .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .module = fragmentShader,
-            .pSpecializationInfo = nullptr,
-            .flags = 0,
-            .pName = "main",
-        }};
+    VkPipelineShaderStageCreateInfo shaderStages[2]{
+            {
+                    .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+                    .pNext = nullptr,
+                    .flags = 0,
+                    .stage = VK_SHADER_STAGE_VERTEX_BIT,
+                    .module = vertexShader,
+                    .pName = "main",
+                    .pSpecializationInfo = nullptr,
+            },
+            {
+                    .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+                    .pNext = nullptr,
+                    .flags = 0,
+                    .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+                    .module = fragmentShader,
+                    .pName = "main",
+                    .pSpecializationInfo = nullptr,
+            }
+    };
 
     VkViewport viewports{
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f,
-        .x = 0,
-        .y = 0,
-        .width = (float)m_swapchainInfo.displaySize.width,
-        .height = (float)m_swapchainInfo.displaySize.height,
+            .x = 0,
+            .y = 0,
+            .width = (float) m_swapchainInfo.displaySize.width,
+            .height = (float) m_swapchainInfo.displaySize.height,
+            .minDepth = 0.0f,
+            .maxDepth = 1.0f,
     };
 
     VkRect2D scissor = {
-        .extent = m_swapchainInfo.displaySize,
-        .offset = {
-            .x = 0, .y = 0,
-        }};
+            .offset = {.x = 0, .y = 0},
+            .extent = m_swapchainInfo.displaySize
+    };
     // Specify viewport info
     VkPipelineViewportStateCreateInfo viewportInfo{
             .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .viewportCount = 1,
-        .pViewports = &viewports,
-        .scissorCount = 1,
-        .pScissors = &scissor,
+            .pNext = nullptr,
+            .viewportCount = 1,
+            .pViewports = &viewports,
+            .scissorCount = 1,
+            .pScissors = &scissor,
     };
 
     // Specify multisample info
     VkSampleMask sampleMask = ~0u;
-    VkPipelineMultisampleStateCreateInfo multisampleInfo {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
-        .sampleShadingEnable = VK_FALSE,
-        .minSampleShading = 0,
-        .pSampleMask = &sampleMask,
-        .alphaToCoverageEnable = VK_FALSE,
-        .alphaToOneEnable = VK_FALSE,
+    VkPipelineMultisampleStateCreateInfo multisampleInfo{
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+            .pNext = nullptr,
+            .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+            .sampleShadingEnable = VK_FALSE,
+            .minSampleShading = 0,
+            .pSampleMask = &sampleMask,
+            .alphaToCoverageEnable = VK_FALSE,
+            .alphaToOneEnable = VK_FALSE,
     };
 
     // Specify color blend state
-    VkPipelineColorBlendAttachmentState attachmentStates {
-        .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-                          VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-        .blendEnable = VK_FALSE,
+    VkPipelineColorBlendAttachmentState attachmentStates{
+            .blendEnable = VK_FALSE,
+            .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+                              VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
     };
     VkPipelineColorBlendStateCreateInfo colorBlendInfo{
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .logicOpEnable = VK_FALSE,
-        .logicOp = VK_LOGIC_OP_COPY,
-        .attachmentCount = 1,
-        .pAttachments = &attachmentStates,
-        .flags = 0,
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
+            .logicOpEnable = VK_FALSE,
+            .logicOp = VK_LOGIC_OP_COPY,
+            .attachmentCount = 1,
+            .pAttachments = &attachmentStates,
     };
 
     // Specify rasterizer info
-    VkPipelineRasterizationStateCreateInfo rasterInfo {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .depthClampEnable = VK_FALSE,
-        .rasterizerDiscardEnable = VK_FALSE,
-        .polygonMode = VK_POLYGON_MODE_FILL,
-        .cullMode = VK_CULL_MODE_NONE,
-        .frontFace = VK_FRONT_FACE_CLOCKWISE,
-        .depthBiasEnable = VK_FALSE,
-        .lineWidth = 1,
+    VkPipelineRasterizationStateCreateInfo rasterInfo{
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+            .pNext = nullptr,
+            .depthClampEnable = VK_FALSE,
+            .rasterizerDiscardEnable = VK_FALSE,
+            .polygonMode = VK_POLYGON_MODE_FILL,
+            .cullMode = VK_CULL_MODE_NONE,
+            .frontFace = VK_FRONT_FACE_CLOCKWISE,
+            .depthBiasEnable = VK_FALSE,
+            .lineWidth = 1,
     };
 
     // Specify input assembler state
-    VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo {
+    VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{
             .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
             .pNext = nullptr,
             .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
@@ -693,66 +684,67 @@ VkResult VKVideoRendererYUV420::createGraphicsPipeline(const char *pVertexSource
     };
 
     // Specify vertex input state
-    VkVertexInputBindingDescription vertex_input_bindings {
+    VkVertexInputBindingDescription vertex_input_bindings{
             .binding = 0,
             .stride = sizeof(Vertex),
             .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
     };
-    VkVertexInputAttributeDescription vertex_input_attributes[2] {
-        {
-            .binding = 0,
-            .location = 0,
-            .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = (uint32_t)offsetof(Vertex, pos),
-        },
-        {
-            .binding = 0,
-            .location = 1,
-            .format = VK_FORMAT_R32G32_SFLOAT,
-            .offset = (uint32_t)offsetof(Vertex, uv),
-        }};
+    VkVertexInputAttributeDescription vertex_input_attributes[2]{
+            {
+                    .location = 0,
+                    .binding = 0,
+                    .format = VK_FORMAT_R32G32B32_SFLOAT,
+                    .offset = (uint32_t) offsetof(Vertex, pos),
+            },
+            {
+                    .location = 1,
+                    .binding = 0,
+                    .format = VK_FORMAT_R32G32_SFLOAT,
+                    .offset = (uint32_t) offsetof(Vertex, uv),
+            }
+    };
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .vertexBindingDescriptionCount = 1,
-        .pVertexBindingDescriptions = &vertex_input_bindings,
-        .vertexAttributeDescriptionCount = 2,
-        .pVertexAttributeDescriptions = vertex_input_attributes,
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+            .pNext = nullptr,
+            .vertexBindingDescriptionCount = 1,
+            .pVertexBindingDescriptions = &vertex_input_bindings,
+            .vertexAttributeDescriptionCount = 2,
+            .pVertexAttributeDescriptions = vertex_input_attributes,
     };
 
     // Create the pipeline cache
     VkPipelineCacheCreateInfo pipelineCacheInfo{
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
-        .pNext = nullptr,
-        .initialDataSize = 0,
-        .pInitialData = nullptr,
-        .flags = 0,  // reserved, must be 0
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,  // reserved, must be 0
+            .initialDataSize = 0,
+            .pInitialData = nullptr,
     };
 
     CALL_VK(vkCreatePipelineCache(m_deviceInfo.device, &pipelineCacheInfo, nullptr,
-                                  &m_gfxPipeline.cache));
+                                  &m_gfxPipeline.cache))
 
     // Create the pipeline
     VkGraphicsPipelineCreateInfo pipelineCreateInfo{
-        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-        .stageCount = 2,
-        .pStages = shaderStages,
-        .pVertexInputState = &vertexInputInfo,
-        .pInputAssemblyState = &inputAssemblyInfo,
-        .pTessellationState = nullptr,
-        .pViewportState = &viewportInfo,
-        .pRasterizationState = &rasterInfo,
-        .pMultisampleState = &multisampleInfo,
-        .pDepthStencilState = nullptr,
-        .pColorBlendState = &colorBlendInfo,
-        .pDynamicState = &dynamicStateInfo,
-        .layout = m_gfxPipeline.layout,
-        .renderPass = m_render.renderPass,
-        .subpass = 0,
-        .basePipelineHandle = VK_NULL_HANDLE,
-        .basePipelineIndex = 0,
+            .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
+            .stageCount = 2,
+            .pStages = shaderStages,
+            .pVertexInputState = &vertexInputInfo,
+            .pInputAssemblyState = &inputAssemblyInfo,
+            .pTessellationState = nullptr,
+            .pViewportState = &viewportInfo,
+            .pRasterizationState = &rasterInfo,
+            .pMultisampleState = &multisampleInfo,
+            .pDepthStencilState = nullptr,
+            .pColorBlendState = &colorBlendInfo,
+            .pDynamicState = &dynamicStateInfo,
+            .layout = m_gfxPipeline.layout,
+            .renderPass = m_render.renderPass,
+            .subpass = 0,
+            .basePipelineHandle = VK_NULL_HANDLE,
+            .basePipelineIndex = 0,
     };
 
     VkResult pipelineResult = vkCreateGraphicsPipelines(
@@ -766,9 +758,8 @@ VkResult VKVideoRendererYUV420::createGraphicsPipeline(const char *pVertexSource
     return pipelineResult;
 }
 
-void VKVideoRendererYUV420::updateDescriptorSet()
-{
-    VkDescriptorBufferInfo bufferInfo {
+void VKVideoRendererYUV420::updateDescriptorSet() {
+    VkDescriptorBufferInfo bufferInfo{
             bufferInfo.buffer = m_buffers.uboBuffer,
             bufferInfo.offset = 0,
             bufferInfo.range = sizeof(UniformBufferObject)
@@ -782,7 +773,7 @@ void VKVideoRendererYUV420::updateDescriptorSet()
         texDsts[idx].imageLayout = VK_IMAGE_LAYOUT_GENERAL;
     }
 
-    VkWriteDescriptorSet writeDst[2] {
+    VkWriteDescriptorSet writeDst[2]{
             {
                     .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                     .pNext = nullptr,
@@ -812,17 +803,16 @@ void VKVideoRendererYUV420::updateDescriptorSet()
 }
 
 // initialize descriptor set
-void VKVideoRendererYUV420::createDescriptorSet()
-{
-    const VkDescriptorPoolSize poolSizes[2] {
-        {
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = 1
-        },
-        {
-            .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            .descriptorCount = kTextureCount
-        }
+void VKVideoRendererYUV420::createDescriptorSet() {
+    const VkDescriptorPoolSize poolSizes[2]{
+            {
+                    .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                    .descriptorCount = 1
+            },
+            {
+                    .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                    .descriptorCount = kTextureCount
+            }
     };
     const VkDescriptorPoolCreateInfo descriptor_pool = {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
@@ -832,54 +822,55 @@ void VKVideoRendererYUV420::createDescriptorSet()
             .pPoolSizes = poolSizes,
     };
 
-    CALL_VK(vkCreateDescriptorPool(m_deviceInfo.device, &descriptor_pool, nullptr, &m_gfxPipeline.descPool));
+    CALL_VK(vkCreateDescriptorPool(m_deviceInfo.device, &descriptor_pool, nullptr,
+                                   &m_gfxPipeline.descPool))
 
-    VkDescriptorSetAllocateInfo alloc_info {
+    VkDescriptorSetAllocateInfo alloc_info{
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
             .pNext = nullptr,
             .descriptorPool = m_gfxPipeline.descPool,
             .descriptorSetCount = 1,
             .pSetLayouts = &m_gfxPipeline.descLayout};
-    CALL_VK(vkAllocateDescriptorSets(m_deviceInfo.device, &alloc_info, &m_gfxPipeline.descSet));
+    CALL_VK(vkAllocateDescriptorSets(m_deviceInfo.device, &alloc_info, &m_gfxPipeline.descSet))
 
     updateDescriptorSet();
 }
 
-void VKVideoRendererYUV420::createCommandPool()
-{
+void VKVideoRendererYUV420::createCommandPool() {
 // Create a pool of command buffers to allocate command buffer from
-    VkCommandPoolCreateInfo cmdPoolCreateInfo {
+    VkCommandPoolCreateInfo cmdPoolCreateInfo{
             .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
             .pNext = nullptr,
             .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
             .queueFamilyIndex = 0,
     };
     CALL_VK(vkCreateCommandPool(m_deviceInfo.device, &cmdPoolCreateInfo, nullptr,
-                                &m_render.cmdPool));
+                                &m_render.cmdPool))
 
     // Record a command buffer that just clear the screen
     // 1 command buffer draw in 1 framebuffer
     // In our case we need 2 command as we have 2 framebuffer
     m_render.cmdBufferLen = m_swapchainInfo.swapchainLength;
     m_render.cmdBuffer = std::make_unique<VkCommandBuffer[]>(m_swapchainInfo.swapchainLength);
-    VkCommandBufferAllocateInfo cmdBufferCreateInfo {
+    VkCommandBufferAllocateInfo cmdBufferCreateInfo{
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
             .pNext = nullptr,
             .commandPool = m_render.cmdPool,
             .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
             .commandBufferCount = m_render.cmdBufferLen,
     };
-    CALL_VK(vkAllocateCommandBuffers(m_deviceInfo.device, &cmdBufferCreateInfo, m_render.cmdBuffer.get()));
+    CALL_VK(vkAllocateCommandBuffers(m_deviceInfo.device, &cmdBufferCreateInfo,
+                                     m_render.cmdBuffer.get()))
 
     for (int bufferIndex = 0; bufferIndex < m_swapchainInfo.swapchainLength; bufferIndex++) {
         // We start by creating and declare the "beginning" our command buffer
-        VkCommandBufferBeginInfo cmdBufferBeginInfo {
+        VkCommandBufferBeginInfo cmdBufferBeginInfo{
                 .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
                 .pNext = nullptr,
                 .flags = 0,
                 .pInheritanceInfo = nullptr,
         };
-        CALL_VK(vkBeginCommandBuffer(m_render.cmdBuffer[bufferIndex], &cmdBufferBeginInfo));
+        CALL_VK(vkBeginCommandBuffer(m_render.cmdBuffer[bufferIndex], &cmdBufferBeginInfo))
 
         // transition the buffer into color attachment
         setImageLayout(m_render.cmdBuffer[bufferIndex],
@@ -890,7 +881,7 @@ void VKVideoRendererYUV420::createCommandPool()
                        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
         // Now we start a renderpass. Any draw command has to be recorded in a renderpass
-        VkClearValue clearVals {
+        VkClearValue clearVals{
                 .color.float32[0] = 0.0f,
                 .color.float32[1] = 0.0f,
                 .color.float32[2] = 0.0f,
@@ -902,7 +893,7 @@ void VKVideoRendererYUV420::createCommandPool()
                 .pNext = nullptr,
                 .renderPass = m_render.renderPass,
                 .framebuffer = m_swapchainInfo.framebuffers[bufferIndex],
-                .renderArea = { .offset = { .x = 0, .y = 0 },
+                .renderArea = {.offset = {.x = 0, .y = 0},
                         .extent = m_swapchainInfo.displaySize},
                 .clearValueCount = 1,
                 .pClearValues = &clearVals};
@@ -914,9 +905,11 @@ void VKVideoRendererYUV420::createCommandPool()
         vkCmdBindDescriptorSets(m_render.cmdBuffer[bufferIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
                                 m_gfxPipeline.layout, 0, 1, &m_gfxPipeline.descSet, 0, nullptr);
         VkDeviceSize offset = 0;
-        vkCmdBindVertexBuffers(m_render.cmdBuffer[bufferIndex], 0, 1, &m_buffers.vertexBuffer, &offset);
+        vkCmdBindVertexBuffers(m_render.cmdBuffer[bufferIndex], 0, 1, &m_buffers.vertexBuffer,
+                               &offset);
 
-        vkCmdBindIndexBuffer(m_render.cmdBuffer[bufferIndex], m_buffers.indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+        vkCmdBindIndexBuffer(m_render.cmdBuffer[bufferIndex], m_buffers.indexBuffer, 0,
+                             VK_INDEX_TYPE_UINT16);
         vkCmdDrawIndexed(m_render.cmdBuffer[bufferIndex], m_indexCount, 1, 0, 0, 0);
 
         vkCmdEndRenderPass(m_render.cmdBuffer[bufferIndex]);
@@ -926,31 +919,32 @@ void VKVideoRendererYUV420::createCommandPool()
                        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
                        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
-        CALL_VK(vkEndCommandBuffer(m_render.cmdBuffer[bufferIndex]));
+        CALL_VK(vkEndCommandBuffer(m_render.cmdBuffer[bufferIndex]))
     }
 
     // We need to create a fence to be able, in the main loop, to wait for our
     // draw command(s) to finish before swapping the framebuffers
-    VkFenceCreateInfo fenceCreateInfo {
+    VkFenceCreateInfo fenceCreateInfo{
             .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
             .pNext = nullptr,
             .flags = 0,
     };
-    CALL_VK(vkCreateFence(m_deviceInfo.device, &fenceCreateInfo, nullptr, &m_render.fence));
+    CALL_VK(vkCreateFence(m_deviceInfo.device, &fenceCreateInfo, nullptr, &m_render.fence))
 
     // We need to create a semaphore to be able to wait, in the main loop, for our
     // framebuffer to be available for us before drawing.
-    VkSemaphoreCreateInfo semaphoreCreateInfo {
+    VkSemaphoreCreateInfo semaphoreCreateInfo{
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
             .pNext = nullptr,
             .flags = 0,
     };
-    CALL_VK(vkCreateSemaphore(m_deviceInfo.device, &semaphoreCreateInfo, nullptr, &m_render.semaphore));
+    CALL_VK(vkCreateSemaphore(m_deviceInfo.device, &semaphoreCreateInfo, nullptr,
+                              &m_render.semaphore))
 }
 
 // A helper function
 bool VKVideoRendererYUV420::mapMemoryTypeToIndex(uint32_t typeBits, VkFlags requirements_mask,
-                          uint32_t* typeIndex) {
+                                                 uint32_t *typeIndex) const {
     VkPhysicalDeviceMemoryProperties memoryProperties;
     vkGetPhysicalDeviceMemoryProperties(m_deviceInfo.physicalDevice, &memoryProperties);
     // Search memtypes to find first index with those properties
@@ -968,77 +962,77 @@ bool VKVideoRendererYUV420::mapMemoryTypeToIndex(uint32_t typeBits, VkFlags requ
     return false;
 }
 
-void VKVideoRendererYUV420::updateUniformBuffers()
-{
-    float targetAspectRatio = (float)m_width / (float)m_height;
+void VKVideoRendererYUV420::updateUniformBuffers() {
+    float targetAspectRatio = (float) m_width / (float) m_height;
 
-    mat4f_load_ortho(-1.0f, 1.0f, -targetAspectRatio, targetAspectRatio, -1.0f, 1.0f, m_ubo.projection);
+    mat4f_load_ortho(-1.0f, 1.0f, -targetAspectRatio, targetAspectRatio, -1.0f, 1.0f,
+                     m_ubo.projection);
 
     mat4f_load_rotation_z(m_rotation + 180, m_ubo.rotation);
 
-    float scaleFactor = aspect_ratio_correction(false, m_backingWidth, m_backingHeight, m_width, m_height);
+    float scaleFactor = aspect_ratio_correction(false, m_backingWidth, m_backingHeight, m_width,
+                                                m_height);
 
     mat4f_load_scale(scaleFactor, scaleFactor, 1.0f, m_ubo.scale);
 }
 
-void VKVideoRendererYUV420::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
-{
-    VkCommandPoolCreateInfo cmdPoolCreateInfo {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = m_deviceInfo.queueFamilyIndex,
+void VKVideoRendererYUV420::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+    VkCommandPoolCreateInfo cmdPoolCreateInfo{
+            .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+            .queueFamilyIndex = m_deviceInfo.queueFamilyIndex,
     };
 
     VkCommandPool cmdPool;
-    CALL_VK(vkCreateCommandPool(m_deviceInfo.device, &cmdPoolCreateInfo, nullptr, &cmdPool));
+    CALL_VK(vkCreateCommandPool(m_deviceInfo.device, &cmdPoolCreateInfo, nullptr, &cmdPool))
 
     VkCommandBuffer cmdBuffer;
     const VkCommandBufferAllocateInfo cmd = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = cmdPool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1,
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+            .pNext = nullptr,
+            .commandPool = cmdPool,
+            .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+            .commandBufferCount = 1,
     };
 
-    CALL_VK(vkAllocateCommandBuffers(m_deviceInfo.device, &cmd, &cmdBuffer));
+    CALL_VK(vkAllocateCommandBuffers(m_deviceInfo.device, &cmd, &cmdBuffer))
     VkCommandBufferBeginInfo cmdBufferInfo = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-        .pInheritanceInfo = nullptr};
-    CALL_VK(vkBeginCommandBuffer(cmdBuffer, &cmdBufferInfo));
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .pNext = nullptr,
+            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+            .pInheritanceInfo = nullptr};
+    CALL_VK(vkBeginCommandBuffer(cmdBuffer, &cmdBufferInfo))
 
     VkBufferCopy copyRegion = {
-        .srcOffset = 0,
-        .dstOffset = 0,
-        .size = size
+            .srcOffset = 0,
+            .dstOffset = 0,
+            .size = size
     };
     vkCmdCopyBuffer(cmdBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 
-    CALL_VK(vkEndCommandBuffer(cmdBuffer));
+    CALL_VK(vkEndCommandBuffer(cmdBuffer))
     VkFenceCreateInfo fenceInfo = {
-        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
+            .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
     };
     VkFence fence;
-    CALL_VK(vkCreateFence(m_deviceInfo.device, &fenceInfo, nullptr, &fence));
+    CALL_VK(vkCreateFence(m_deviceInfo.device, &fenceInfo, nullptr, &fence))
 
     VkSubmitInfo submitInfo = {
-        .pNext = nullptr,
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .waitSemaphoreCount = 0,
-        .pWaitSemaphores = nullptr,
-        .pWaitDstStageMask = nullptr,
-        .commandBufferCount = 1,
-        .pCommandBuffers = &cmdBuffer,
-        .signalSemaphoreCount = 0,
-        .pSignalSemaphores = nullptr,
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .pNext = nullptr,
+            .waitSemaphoreCount = 0,
+            .pWaitSemaphores = nullptr,
+            .pWaitDstStageMask = nullptr,
+            .commandBufferCount = 1,
+            .pCommandBuffers = &cmdBuffer,
+            .signalSemaphoreCount = 0,
+            .pSignalSemaphores = nullptr,
     };
-    CALL_VK(vkQueueSubmit(m_deviceInfo.queue, 1, &submitInfo, fence) != VK_SUCCESS);
-    CALL_VK(vkWaitForFences(m_deviceInfo.device, 1, &fence, VK_TRUE, 100000000) != VK_SUCCESS);
+    CALL_VK(vkQueueSubmit(m_deviceInfo.queue, 1, &submitInfo, fence) != VK_SUCCESS)
+    CALL_VK(vkWaitForFences(m_deviceInfo.device, 1, &fence, VK_TRUE, 100000000) != VK_SUCCESS)
     vkDestroyFence(m_deviceInfo.device, fence, nullptr);
 
     vkFreeCommandBuffers(m_deviceInfo.device, cmdPool, 1, &cmdBuffer);
@@ -1046,21 +1040,21 @@ void VKVideoRendererYUV420::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, V
 }
 
 void VKVideoRendererYUV420::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
-                                         VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
-{
+                                         VkMemoryPropertyFlags properties, VkBuffer &buffer,
+                                         VkDeviceMemory &bufferMemory) {
     // Create a buffer
-    VkBufferCreateInfo bufferInfo {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .pNext = nullptr,
-        .size = size,
-        .usage = usage,
-        .flags = 0,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .queueFamilyIndexCount = 1,
-        .pQueueFamilyIndices = &m_deviceInfo.queueFamilyIndex,
+    VkBufferCreateInfo bufferInfo{
+            .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
+            .size = size,
+            .usage = usage,
+            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+            .queueFamilyIndexCount = 1,
+            .pQueueFamilyIndices = &m_deviceInfo.queueFamilyIndex,
     };
 
-    CALL_VK(vkCreateBuffer(m_deviceInfo.device, &bufferInfo, nullptr, &buffer));
+    CALL_VK(vkCreateBuffer(m_deviceInfo.device, &bufferInfo, nullptr, &buffer))
 
     VkMemoryRequirements memReq;
     vkGetBufferMemoryRequirements(m_deviceInfo.device, buffer, &memReq);
@@ -1076,12 +1070,11 @@ void VKVideoRendererYUV420::createBuffer(VkDeviceSize size, VkBufferUsageFlags u
     mapMemoryTypeToIndex(memReq.memoryTypeBits, properties, &allocInfo.memoryTypeIndex);
 
     // Allocate memory for the buffer
-    CALL_VK(vkAllocateMemory(m_deviceInfo.device, &allocInfo, nullptr, &bufferMemory));
-    CALL_VK(vkBindBufferMemory(m_deviceInfo.device, buffer, bufferMemory, 0));
+    CALL_VK(vkAllocateMemory(m_deviceInfo.device, &allocInfo, nullptr, &bufferMemory))
+    CALL_VK(vkBindBufferMemory(m_deviceInfo.device, buffer, bufferMemory, 0))
 }
 
-void VKVideoRendererYUV420::createUniformBuffers()
-{
+void VKVideoRendererYUV420::createUniformBuffers() {
     updateUniformBuffers();
 
     VkBuffer stagingBuffer;
@@ -1094,8 +1087,8 @@ void VKVideoRendererYUV420::createUniformBuffers()
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                  stagingBuffer, stagingBufferMemory);
 
-    void* data = nullptr;
-    CALL_VK(vkMapMemory(m_deviceInfo.device, stagingBufferMemory, 0, bufferSize, 0, &data));
+    void *data = nullptr;
+    CALL_VK(vkMapMemory(m_deviceInfo.device, stagingBufferMemory, 0, bufferSize, 0, &data))
     memcpy(data, &m_ubo, bufferSize);
     vkUnmapMemory(m_deviceInfo.device, stagingBufferMemory);
 
@@ -1109,13 +1102,12 @@ void VKVideoRendererYUV420::createUniformBuffers()
     vkFreeMemory(m_deviceInfo.device, stagingBufferMemory, nullptr);
 }
 
-void VKVideoRendererYUV420::createVertexBuffer()
-{
-    const Vertex vertices[4] {
-        { {  1.0f,  1.0f, 0.0f }, { 1.0f, 1.0f } },
-        { { -1.0f,  1.0f, 0.0f }, { 0.0f, 1.0f } },
-        { { -1.0f, -1.0f, 0.0f }, { 0.0f, 0.0f } },
-        { {  1.0f, -1.0f, 0.0f }, { 1.0f, 0.0f } }
+void VKVideoRendererYUV420::createVertexBuffer() {
+    const Vertex vertices[4]{
+            {{1.0f,  1.0f,  0.0f}, {1.0f, 1.0f}},
+            {{-1.0f, 1.0f,  0.0f}, {0.0f, 1.0f}},
+            {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
+            {{1.0f,  -1.0f, 0.0f}, {1.0f, 0.0f}}
     };
 
     VkBuffer stagingBuffer;
@@ -1127,8 +1119,8 @@ void VKVideoRendererYUV420::createVertexBuffer()
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                  stagingBuffer, stagingBufferMemory);
 
-    void* data = nullptr;
-    CALL_VK(vkMapMemory(m_deviceInfo.device, stagingBufferMemory, 0, bufferSize, 0, &data));
+    void *data = nullptr;
+    CALL_VK(vkMapMemory(m_deviceInfo.device, stagingBufferMemory, 0, bufferSize, 0, &data))
     memcpy(data, vertices, bufferSize);
     vkUnmapMemory(m_deviceInfo.device, stagingBufferMemory);
 
@@ -1143,10 +1135,9 @@ void VKVideoRendererYUV420::createVertexBuffer()
 }
 
 // Create our vertex buffer
-void VKVideoRendererYUV420::createIndexBuffer()
-{
-    const uint16_t indices[6] {
-        0, 1, 2, 2, 3, 0
+void VKVideoRendererYUV420::createIndexBuffer() {
+    const uint16_t indices[6]{
+            0, 1, 2, 2, 3, 0
     };
 
     VkBuffer stagingBuffer;
@@ -1160,8 +1151,8 @@ void VKVideoRendererYUV420::createIndexBuffer()
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                  stagingBuffer, stagingBufferMemory);
 
-    void* data = nullptr;
-    CALL_VK(vkMapMemory(m_deviceInfo.device, stagingBufferMemory, 0, bufferSize, 0, &data));
+    void *data = nullptr;
+    CALL_VK(vkMapMemory(m_deviceInfo.device, stagingBufferMemory, 0, bufferSize, 0, &data))
     memcpy(data, indices, bufferSize);
     vkUnmapMemory(m_deviceInfo.device, stagingBufferMemory);
 
@@ -1175,8 +1166,7 @@ void VKVideoRendererYUV420::createIndexBuffer()
     vkFreeMemory(m_deviceInfo.device, stagingBufferMemory, nullptr);
 }
 
-void VKVideoRendererYUV420::deleteBuffers()
-{
+void VKVideoRendererYUV420::deleteBuffers() const {
     vkDestroyBuffer(m_deviceInfo.device, m_buffers.vertexBuffer, nullptr);
     vkFreeMemory(m_deviceInfo.device, m_buffers.vertexBufferMemory, nullptr);
 
@@ -1184,14 +1174,12 @@ void VKVideoRendererYUV420::deleteBuffers()
     vkFreeMemory(m_deviceInfo.device, m_buffers.indexBufferMemory, nullptr);
 }
 
-void VKVideoRendererYUV420::deleteUniformBuffers()
-{
+void VKVideoRendererYUV420::deleteUniformBuffers() const {
     vkDestroyBuffer(m_deviceInfo.device, m_buffers.uboBuffer, nullptr);
     vkFreeMemory(m_deviceInfo.device, m_buffers.uboBufferMemory, nullptr);
 }
 
-bool VKVideoRendererYUV420::isInitialized()
-{
+bool VKVideoRendererYUV420::isInitialized() const {
     return m_deviceInfo.initialized;
 }
 
@@ -1199,8 +1187,8 @@ bool VKVideoRendererYUV420::isInitialized()
 // memory type is an index into the array of 32 entries; or the bit index
 // for the memory type ( each BIT of an 32 bit integer is a type ).
 VkResult VKVideoRendererYUV420::allocateMemoryTypeFromProperties(uint32_t typeBits,
-                                          VkFlags requirements_mask,
-                                          uint32_t* typeIndex) {
+                                                                 VkFlags requirements_mask,
+                                                                 uint32_t *typeIndex) {
     // Search memtypes to find first index with those properties
     for (uint32_t i = 0; i < 32; i++) {
         if ((typeBits & 1) == 1) {
@@ -1217,9 +1205,8 @@ VkResult VKVideoRendererYUV420::allocateMemoryTypeFromProperties(uint32_t typeBi
     return VK_ERROR_MEMORY_MAP_FAILED;
 }
 
-size_t VKVideoRendererYUV420::getBufferOffset(VulkanTexture* texture, TextureType type,
-        size_t width, size_t height)
-{
+size_t VKVideoRendererYUV420::getBufferOffset(VulkanTexture *texture, TextureType type,
+                                              size_t width, size_t height) {
     size_t offset = 0;
     if (type == tTexY) {
         texture->width = width;
@@ -1237,9 +1224,8 @@ size_t VKVideoRendererYUV420::getBufferOffset(VulkanTexture* texture, TextureTyp
     return offset;
 }
 
-void VKVideoRendererYUV420::copyTextureData(VulkanTexture* texture, uint8_t* data)
-{
-    uint8_t* mappedData = (uint8_t*)texture->mapped;
+void VKVideoRendererYUV420::copyTextureData(VulkanTexture *texture, uint8_t *data) {
+    auto *mappedData = (uint8_t *) texture->mapped;
     for (int i = 0; i < texture->height; ++i) {
         memcpy(mappedData, data, texture->width);
         mappedData += texture->layout.rowPitch;
@@ -1247,9 +1233,10 @@ void VKVideoRendererYUV420::copyTextureData(VulkanTexture* texture, uint8_t* dat
     }
 }
 
-VkResult VKVideoRendererYUV420::loadTexture(uint8_t* buffer, TextureType type, size_t width, size_t height,
-                                            VulkanTexture* texture, VkImageUsageFlags usage, VkFlags required_props)
-{
+VkResult
+VKVideoRendererYUV420::loadTexture(uint8_t *buffer, TextureType type, size_t width, size_t height,
+                                   VulkanTexture *texture, VkImageUsageFlags usage,
+                                   VkFlags required_props) {
     if (!(usage | required_props)) {
         LOGE("No usage and required_pros");
         return VK_ERROR_FORMAT_NOT_SUPPORTED;
@@ -1259,7 +1246,8 @@ VkResult VKVideoRendererYUV420::loadTexture(uint8_t* buffer, TextureType type, s
     VkFormatProperties props;
     bool needBlit = true;
     vkGetPhysicalDeviceFormatProperties(m_deviceInfo.physicalDevice, kTextureFormat, &props);
-    assert((props.linearTilingFeatures | props.optimalTilingFeatures) & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT);
+    assert((props.linearTilingFeatures | props.optimalTilingFeatures) &
+           VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT);
 
     if (props.linearTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT) {
         // linear format supporting the required texture
@@ -1270,46 +1258,48 @@ VkResult VKVideoRendererYUV420::loadTexture(uint8_t* buffer, TextureType type, s
 
     // Allocate the linear texture so texture could be copied over
     VkImageCreateInfo imageCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .pNext = nullptr,
-        .imageType = VK_IMAGE_TYPE_2D,
-        .format = kTextureFormat,
-        .extent = {static_cast<uint32_t>(texture->width), static_cast<uint32_t>(texture->height), 1},
-        .mipLevels = 1,
-        .arrayLayers = 1,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .tiling = VK_IMAGE_TILING_LINEAR,
-        .usage = (needBlit ? VK_IMAGE_USAGE_TRANSFER_SRC_BIT
-                           : VK_IMAGE_USAGE_SAMPLED_BIT),
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .queueFamilyIndexCount = 1,
-        .pQueueFamilyIndices = &m_deviceInfo.queueFamilyIndex,
-        .initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED,
-        .flags = 0,
+            .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
+            .imageType = VK_IMAGE_TYPE_2D,
+            .format = kTextureFormat,
+            .extent = {static_cast<uint32_t>(texture->width),
+                       static_cast<uint32_t>(texture->height), 1},
+            .mipLevels = 1,
+            .arrayLayers = 1,
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .tiling = VK_IMAGE_TILING_LINEAR,
+            .usage = (needBlit ? VK_IMAGE_USAGE_TRANSFER_SRC_BIT
+                               : VK_IMAGE_USAGE_SAMPLED_BIT),
+            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+            .queueFamilyIndexCount = 1,
+            .pQueueFamilyIndices = &m_deviceInfo.queueFamilyIndex,
+            .initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED,
     };
     VkMemoryAllocateInfo memAlloc = {
-        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .allocationSize = 0,
-        .memoryTypeIndex = 0,
+            .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+            .pNext = nullptr,
+            .allocationSize = 0,
+            .memoryTypeIndex = 0,
     };
 
     VkMemoryRequirements memReqs;
-    CALL_VK(vkCreateImage(m_deviceInfo.device, &imageCreateInfo, nullptr, &texture->image));
+    CALL_VK(vkCreateImage(m_deviceInfo.device, &imageCreateInfo, nullptr, &texture->image))
     vkGetImageMemoryRequirements(m_deviceInfo.device, texture->image, &memReqs);
     memAlloc.allocationSize = memReqs.size;
     VK_CHECK(allocateMemoryTypeFromProperties(memReqs.memoryTypeBits,
                                               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-                                              &memAlloc.memoryTypeIndex));
-    CALL_VK(vkAllocateMemory(m_deviceInfo.device, &memAlloc, nullptr, &texture->mem));
-    CALL_VK(vkBindImageMemory(m_deviceInfo.device, texture->image, texture->mem, 0));
+                                              &memAlloc.memoryTypeIndex))
+    CALL_VK(vkAllocateMemory(m_deviceInfo.device, &memAlloc, nullptr, &texture->mem))
+    CALL_VK(vkBindImageMemory(m_deviceInfo.device, texture->image, texture->mem, 0))
 
     if (required_props & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
         const VkImageSubresource subres = {
                 .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .mipLevel = 0, .arrayLayer = 0,
         };
         vkGetImageSubresourceLayout(m_deviceInfo.device, texture->image, &subres, &texture->layout);
-        CALL_VK(vkMapMemory(m_deviceInfo.device, texture->mem, 0, memAlloc.allocationSize, 0, &texture->mapped));
+        CALL_VK(vkMapMemory(m_deviceInfo.device, texture->mem, 0, memAlloc.allocationSize, 0,
+                            &texture->mapped))
 
         copyTextureData(texture, buffer + offset);
     }
@@ -1317,31 +1307,31 @@ VkResult VKVideoRendererYUV420::loadTexture(uint8_t* buffer, TextureType type, s
     texture->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
     VkCommandPoolCreateInfo cmdPoolCreateInfo{
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = m_deviceInfo.queueFamilyIndex,
+            .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+            .queueFamilyIndex = m_deviceInfo.queueFamilyIndex,
     };
 
     VkCommandPool cmdPool;
-    CALL_VK(vkCreateCommandPool(m_deviceInfo.device, &cmdPoolCreateInfo, nullptr, &cmdPool));
+    CALL_VK(vkCreateCommandPool(m_deviceInfo.device, &cmdPoolCreateInfo, nullptr, &cmdPool))
 
     VkCommandBuffer gfxCmd;
     const VkCommandBufferAllocateInfo cmd = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = cmdPool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1,
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+            .pNext = nullptr,
+            .commandPool = cmdPool,
+            .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+            .commandBufferCount = 1,
     };
 
-    CALL_VK(vkAllocateCommandBuffers(m_deviceInfo.device, &cmd, &gfxCmd));
+    CALL_VK(vkAllocateCommandBuffers(m_deviceInfo.device, &cmd, &gfxCmd))
     VkCommandBufferBeginInfo cmdBufferInfo = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-        .pInheritanceInfo = nullptr};
-    CALL_VK(vkBeginCommandBuffer(gfxCmd, &cmdBufferInfo));
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .pNext = nullptr,
+            .flags = 0,
+            .pInheritanceInfo = nullptr};
+    CALL_VK(vkBeginCommandBuffer(gfxCmd, &cmdBufferInfo))
 
     // If linear is supported, we are done
     VkImage stageImage = VK_NULL_HANDLE;
@@ -1364,16 +1354,15 @@ VkResult VKVideoRendererYUV420::loadTexture(uint8_t* buffer, TextureType type, s
                 VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
         imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         CALL_VK(vkCreateImage(m_deviceInfo.device, &imageCreateInfo, nullptr,
-                              &texture->image));
+                              &texture->image))
         vkGetImageMemoryRequirements(m_deviceInfo.device, texture->image, &memReqs);
 
         memAlloc.allocationSize = memReqs.size;
         VK_CHECK(allocateMemoryTypeFromProperties(
                 memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                &memAlloc.memoryTypeIndex));
-        CALL_VK(
-                vkAllocateMemory(m_deviceInfo.device, &memAlloc, nullptr, &texture->mem));
-        CALL_VK(vkBindImageMemory(m_deviceInfo.device, texture->image, texture->mem, 0));
+                &memAlloc.memoryTypeIndex))
+        CALL_VK(vkAllocateMemory(m_deviceInfo.device, &memAlloc, nullptr, &texture->mem))
+        CALL_VK(vkBindImageMemory(m_deviceInfo.device, texture->image, texture->mem, 0))
 
         // transitions image out of UNDEFINED type
         setImageLayout(gfxCmd, stageImage, VK_IMAGE_LAYOUT_PREINITIALIZED,
@@ -1383,23 +1372,23 @@ VkResult VKVideoRendererYUV420::loadTexture(uint8_t* buffer, TextureType type, s
                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                        VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
         VkImageCopy bltInfo{
-            .srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-            .srcSubresource.mipLevel = 0,
-            .srcSubresource.baseArrayLayer = 0,
-            .srcSubresource.layerCount = 1,
-            .srcOffset.x = 0,
-            .srcOffset.y = 0,
-            .srcOffset.z = 0,
-            .dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-            .dstSubresource.mipLevel = 0,
-            .dstSubresource.baseArrayLayer = 0,
-            .dstSubresource.layerCount = 1,
-            .dstOffset.x = 0,
-            .dstOffset.y = 0,
-            .dstOffset.z = 0,
-            .extent.width = static_cast<uint32_t>(texture->width),
-            .extent.height = static_cast<uint32_t>(texture->height),
-            .extent.depth = 1,
+                .srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .srcSubresource.mipLevel = 0,
+                .srcSubresource.baseArrayLayer = 0,
+                .srcSubresource.layerCount = 1,
+                .srcOffset.x = 0,
+                .srcOffset.y = 0,
+                .srcOffset.z = 0,
+                .dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .dstSubresource.mipLevel = 0,
+                .dstSubresource.baseArrayLayer = 0,
+                .dstSubresource.layerCount = 1,
+                .dstOffset.x = 0,
+                .dstOffset.y = 0,
+                .dstOffset.z = 0,
+                .extent.width = static_cast<uint32_t>(texture->width),
+                .extent.height = static_cast<uint32_t>(texture->height),
+                .extent.depth = 1,
         };
         vkCmdCopyImage(gfxCmd, stageImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                        texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
@@ -1411,28 +1400,28 @@ VkResult VKVideoRendererYUV420::loadTexture(uint8_t* buffer, TextureType type, s
                        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
     }
 
-    CALL_VK(vkEndCommandBuffer(gfxCmd));
+    CALL_VK(vkEndCommandBuffer(gfxCmd))
     VkFenceCreateInfo fenceInfo = {
-        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
+            .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
     };
     VkFence fence;
-    CALL_VK(vkCreateFence(m_deviceInfo.device, &fenceInfo, nullptr, &fence));
+    CALL_VK(vkCreateFence(m_deviceInfo.device, &fenceInfo, nullptr, &fence))
 
     VkSubmitInfo submitInfo = {
-        .pNext = nullptr,
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .waitSemaphoreCount = 0,
-        .pWaitSemaphores = nullptr,
-        .pWaitDstStageMask = nullptr,
-        .commandBufferCount = 1,
-        .pCommandBuffers = &gfxCmd,
-        .signalSemaphoreCount = 0,
-        .pSignalSemaphores = nullptr,
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .pNext = nullptr,
+            .waitSemaphoreCount = 0,
+            .pWaitSemaphores = nullptr,
+            .pWaitDstStageMask = nullptr,
+            .commandBufferCount = 1,
+            .pCommandBuffers = &gfxCmd,
+            .signalSemaphoreCount = 0,
+            .pSignalSemaphores = nullptr,
     };
-    CALL_VK(vkQueueSubmit(m_deviceInfo.queue, 1, &submitInfo, fence) != VK_SUCCESS);
-    CALL_VK(vkWaitForFences(m_deviceInfo.device, 1, &fence, VK_TRUE, 100000000) != VK_SUCCESS);
+    CALL_VK(vkQueueSubmit(m_deviceInfo.queue, 1, &submitInfo, fence) != VK_SUCCESS)
+    CALL_VK(vkWaitForFences(m_deviceInfo.device, 1, &fence, VK_TRUE, 100000000) != VK_SUCCESS)
     vkDestroyFence(m_deviceInfo.device, fence, nullptr);
 
     vkFreeCommandBuffers(m_deviceInfo.device, cmdPool, 1, &gfxCmd);
@@ -1444,45 +1433,45 @@ VkResult VKVideoRendererYUV420::loadTexture(uint8_t* buffer, TextureType type, s
     return VK_SUCCESS;
 }
 
-void VKVideoRendererYUV420::createRenderPass()
-{
+void VKVideoRendererYUV420::createRenderPass() {
     // Create render pass
-    VkAttachmentDescription attachmentDescriptions {
-        .format = m_swapchainInfo.displayFormat,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+    VkAttachmentDescription attachmentDescriptions{
+            .format = m_swapchainInfo.displayFormat,
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
     };
 
-    VkAttachmentReference colourReference {
-        .attachment = 0,
-        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+    VkAttachmentReference colourReference{
+            .attachment = 0,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
     };
-    VkSubpassDescription subpassDescription {
-        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-        .flags = 0,
-        .inputAttachmentCount = 0,
-        .pInputAttachments = nullptr,
-        .colorAttachmentCount = 1,
-        .pColorAttachments = &colourReference,
-        .pResolveAttachments = nullptr,
-        .pDepthStencilAttachment = nullptr,
-        .preserveAttachmentCount = 0,
-        .pPreserveAttachments = nullptr,
+    VkSubpassDescription subpassDescription{
+            .flags = 0,
+            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+            .inputAttachmentCount = 0,
+            .pInputAttachments = nullptr,
+            .colorAttachmentCount = 1,
+            .pColorAttachments = &colourReference,
+            .pResolveAttachments = nullptr,
+            .pDepthStencilAttachment = nullptr,
+            .preserveAttachmentCount = 0,
+            .pPreserveAttachments = nullptr,
     };
-    VkRenderPassCreateInfo renderPassCreateInfo {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-        .pNext = nullptr,
-        .attachmentCount = 1,
-        .pAttachments = &attachmentDescriptions,
-        .subpassCount = 1,
-        .pSubpasses = &subpassDescription,
-        .dependencyCount = 0,
-        .pDependencies = nullptr,
+    VkRenderPassCreateInfo renderPassCreateInfo{
+            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+            .pNext = nullptr,
+            .attachmentCount = 1,
+            .pAttachments = &attachmentDescriptions,
+            .subpassCount = 1,
+            .pSubpasses = &subpassDescription,
+            .dependencyCount = 0,
+            .pDependencies = nullptr,
     };
-    CALL_VK(vkCreateRenderPass(m_deviceInfo.device, &renderPassCreateInfo, nullptr, &m_render.renderPass));
+    CALL_VK(vkCreateRenderPass(m_deviceInfo.device, &renderPassCreateInfo, nullptr,
+                               &m_render.renderPass))
 }

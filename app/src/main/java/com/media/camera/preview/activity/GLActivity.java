@@ -51,7 +51,7 @@ public class GLActivity extends BaseActivity implements ActivityCompat.OnRequest
     @Override
     public void onResume() {
         super.onResume();
-        if (!hasPermissionsGranted(CAMERA_PERMISSIONS)) {
+        if (!hasPermissionsGranted()) {
             requestCameraPermission();
         } else {
             mPreview.startCamera();
@@ -60,7 +60,7 @@ public class GLActivity extends BaseActivity implements ActivityCompat.OnRequest
 
     @Override
     public void onPause() {
-        if (hasPermissionsGranted(CAMERA_PERMISSIONS)) {
+        if (hasPermissionsGranted()) {
             mPreview.stopCamera();
         }
         super.onPause();
@@ -97,8 +97,8 @@ public class GLActivity extends BaseActivity implements ActivityCompat.OnRequest
         }
     }
 
-    private boolean hasPermissionsGranted(String[] permissions) {
-        for (String permission : permissions) {
+    private boolean hasPermissionsGranted() {
+        for (String permission : GLActivity.CAMERA_PERMISSIONS) {
             if (ActivityCompat.checkSelfPermission(this, permission)
                     != PackageManager.PERMISSION_GRANTED) {
                 return false;
@@ -121,8 +121,6 @@ public class GLActivity extends BaseActivity implements ActivityCompat.OnRequest
         switch (direction) {
             case SWIPE_UP:
                 showResolutionDialog(mPreview.getOutputSizes());
-                break;
-            case SWIPE_DOWN:
                 break;
             case SWIPE_RIGHT:
                 if (mFilter > 0) {

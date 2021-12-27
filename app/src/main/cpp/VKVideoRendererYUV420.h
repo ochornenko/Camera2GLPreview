@@ -1,28 +1,42 @@
+#include <__bit_reference>
+
 #ifndef _VK_VIDEO_RENDERER_YUV_H_
 #define _VK_VIDEO_RENDERER_YUV_H_
 
 #include "VideoRenderer.h"
 #include "vulkan_wrapper.h"
 
-class VKVideoRendererYUV420 : public VideoRenderer
-{
+class VKVideoRendererYUV420 : public VideoRenderer {
 public:
     VKVideoRendererYUV420();
+
     virtual ~VKVideoRendererYUV420();
 
-    virtual void init(ANativeWindow* window, size_t width, size_t height) override;
+    virtual void init(ANativeWindow *window, size_t width, size_t height) override;
+
     virtual void render() override;
-    virtual void updateFrame(const video_frame& frame) override;
-    virtual void draw(uint8_t *buffer, size_t length, size_t width, size_t height, int rotation) override;
+
+    virtual void updateFrame(const video_frame &frame) override;
+
+    virtual void
+    draw(uint8_t *buffer, size_t length, size_t width, size_t height, float rotation) override;
+
     virtual void setParameters(uint32_t params) override;
+
     virtual uint32_t getParameters() override;
+
     virtual bool createTextures() override;
+
     virtual bool updateTextures() override;
+
     virtual void deleteTextures() override;
+
     virtual int createProgram(const char *pVertexSource, const char *pFragmentSource) override;
 
 private:
-    enum TextureType { tTexY, tTexU, tTexV };
+    enum TextureType {
+        tTexY, tTexU, tTexV
+    };
 
     struct Vertex {
         float pos[3];
@@ -35,18 +49,18 @@ private:
         float scale[16];
     };
 
-    UniformBufferObject m_ubo;
+    UniformBufferObject m_ubo{};
 
     struct VulkanTexture {
         VkSampler sampler;
         VkImage image;
-        VkImageLayout imageLayout;
+        __unused VkImageLayout imageLayout;
         VkSubresourceLayout layout;
         VkDeviceMemory mem;
         VkImageView view;
         size_t width;
         size_t height;
-        void* mapped;
+        void *mapped;
     };
 
     struct VulkanDeviceInfo {
@@ -61,7 +75,7 @@ private:
 
         bool initialized;
     };
-    VulkanDeviceInfo m_deviceInfo;
+    VulkanDeviceInfo m_deviceInfo{};
 
     struct VulkanSwapchainInfo {
         VkSwapchainKHR swapchain;
@@ -95,7 +109,7 @@ private:
         VkPipelineCache cache;
         VkPipeline pipeline;
     };
-    VulkanGfxPipelineInfo m_gfxPipeline;
+    VulkanGfxPipelineInfo m_gfxPipeline{};
 
     struct VulkanBufferInfo {
         VkBuffer vertexBuffer;
@@ -106,58 +120,80 @@ private:
         VkBuffer uboBuffer;
         VkDeviceMemory uboBufferMemory;
     };
-    VulkanBufferInfo m_buffers;
+    VulkanBufferInfo m_buffers{};
 
     static const uint32_t kTextureCount = 3;
     static const VkFormat kTextureFormat = VK_FORMAT_R8_UNORM;
     const TextureType texType[kTextureCount];
-    struct VulkanTexture textures[kTextureCount];
+    struct VulkanTexture textures[kTextureCount]{};
 
     uint8_t *m_pBuffer;
     uint32_t m_indexCount;
-    size_t m_length;
+    __unused  size_t m_length;
 
-    void createDevice(ANativeWindow* platformWindow, VkApplicationInfo* appInfo);
+    void createDevice(ANativeWindow *platformWindow, VkApplicationInfo *appInfo);
+
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
-                      VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-    void createRenderPipeline();
-    void createDescriptorSet();
-    VkResult createGraphicsPipeline(const char *pVertexSource, const char *pFragmentSource);
-    void createFrameBuffers(VkImageView depthView = VK_NULL_HANDLE);
-    void createRenderPass();
-    void createSwapChain();
-    void createUniformBuffers();
-    void createVertexBuffer();
-    void createIndexBuffer();
-    void createCommandPool();
-    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-    void copyTextureData(VulkanTexture* texture, uint8_t* data);
-    void updateDescriptorSet();
-    void updateUniformBuffers();
-    bool mapMemoryTypeToIndex(uint32_t typeBits, VkFlags requirements_mask, uint32_t* typeIndex);
-    void deleteSwapChain();
-    void deleteCommandPool();
-    void deleteRenderPass();
-    void deleteGraphicsPipeline();
-    void deleteBuffers();
-    void deleteUniformBuffers();
+                      VkBuffer &buffer, VkDeviceMemory &bufferMemory);
 
-    bool isInitialized();
+    void createRenderPipeline();
+
+    void createDescriptorSet();
+
+    VkResult createGraphicsPipeline(const char *pVertexSource, const char *pFragmentSource);
+
+    void createFrameBuffers(VkImageView depthView = VK_NULL_HANDLE);
+
+    void createRenderPass();
+
+    void createSwapChain();
+
+    void createUniformBuffers();
+
+    void createVertexBuffer();
+
+    void createIndexBuffer();
+
+    void createCommandPool();
+
+    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+    static void copyTextureData(VulkanTexture *texture, uint8_t *data);
+
+    void updateDescriptorSet();
+
+    void updateUniformBuffers();
+
+    bool mapMemoryTypeToIndex(uint32_t typeBits, VkFlags requirements_mask, uint32_t *typeIndex) const;
+
+    void deleteSwapChain() const;
+
+    void deleteCommandPool() const;
+
+    void deleteRenderPass() const;
+
+    void deleteGraphicsPipeline();
+
+    void deleteBuffers() const;
+
+    void deleteUniformBuffers() const;
+
+    bool isInitialized() const;
 
     VkResult allocateMemoryTypeFromProperties(uint32_t typeBits, VkFlags requirements_mask,
-                                              uint32_t* typeIndex);
+                                              uint32_t *typeIndex);
 
-    size_t getBufferOffset(VulkanTexture* texture, TextureType type, size_t width, size_t height);
+    static size_t getBufferOffset(VulkanTexture *texture, TextureType type, size_t width, size_t height);
 
-    void setImageLayout(VkCommandBuffer cmdBuffer,
+    static void setImageLayout(VkCommandBuffer cmdBuffer,
                         VkImage image,
                         VkImageLayout oldImageLayout,
                         VkImageLayout newImageLayout,
                         VkPipelineStageFlags srcStages,
                         VkPipelineStageFlags destStages);
 
-    VkResult loadTexture(uint8_t* buffer, TextureType type, size_t width, size_t height,
-                         VulkanTexture* texture, VkImageUsageFlags usage, VkFlags required_props);
+    VkResult loadTexture(uint8_t *buffer, TextureType type, size_t width, size_t height,
+                         VulkanTexture *texture, VkImageUsageFlags usage, VkFlags required_props);
 };
 
 #endif //_VK_VIDEO_RENDERER_YUV_H_

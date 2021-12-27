@@ -2,14 +2,14 @@
 
 #include <cmath>
 
-void mat4f_load_ortho(float left, float right, float bottom, float top, float near, float far, float* mat4f)
-{
+void mat4f_load_ortho(float left, float right, float bottom, float top, float near, float far,
+                      float *mat4f) {
     float r_l = right - left;
     float t_b = top - bottom;
     float f_n = far - near;
-    float tx = - (right + left) / (right - left);
-    float ty = - (top + bottom) / (top - bottom);
-    float tz = - (far + near) / (far - near);
+    float tx = -(right + left) / (right - left);
+    float ty = -(top + bottom) / (top - bottom);
+    float tz = -(far + near) / (far - near);
 
     mat4f[0] = 2.0f / r_l;
     mat4f[1] = 0.0f;
@@ -32,9 +32,8 @@ void mat4f_load_ortho(float left, float right, float bottom, float top, float ne
     mat4f[15] = 1.0f;
 }
 
-void mat4f_load_rotation_z(int rotation, float* mat4f)
-{
-    float radians = rotation * (float)M_PI / 180.0f;
+void mat4f_load_rotation_z(float rotation, float *mat4f) {
+    float radians = rotation * (float) M_PI / 180.0f;
     float s = std::sin(radians);
     float c = std::cos(radians);
 
@@ -59,8 +58,7 @@ void mat4f_load_rotation_z(int rotation, float* mat4f)
     mat4f[15] = 1.0f;
 }
 
-void mat4f_load_scale(float scaleX, float scaleY, float scaleZ, float* mat4f)
-{
+void mat4f_load_scale(float scaleX, float scaleY, float scaleZ, float *mat4f) {
     mat4f[0] = scaleX;
     mat4f[1] = 0.0f;
     mat4f[2] = 0.0f;
@@ -82,21 +80,20 @@ void mat4f_load_scale(float scaleX, float scaleY, float scaleZ, float* mat4f)
     mat4f[15] = 1.0f;
 }
 
-float aspect_ratio_correction(bool fillScreen, size_t backingWidth, size_t backingHeight, size_t width, size_t height)
-{
-    float backingAspectRatio = (float)backingWidth / (float)backingHeight;
-    float targetAspectRatio = (float)width / (float)height;
+float aspect_ratio_correction(bool fillScreen,
+                              size_t backingWidth,
+                              size_t backingHeight,
+                              size_t width,
+                              size_t height) {
+    float backingAspectRatio = (float) backingWidth / (float) backingHeight;
+    float targetAspectRatio = (float) width / (float) height;
     float scalingFactor = 1.0f;
 
-    if (fillScreen)
-    {
-        if (backingAspectRatio > targetAspectRatio)
-        {
-            scalingFactor = (float)backingWidth / (float)width;
-        }
-        else
-        {
-            scalingFactor = (float)backingHeight / (float)height;
+    if (fillScreen) {
+        if (backingAspectRatio > targetAspectRatio) {
+            scalingFactor = (float) backingWidth / (float) width;
+        } else {
+            scalingFactor = (float) backingHeight / (float) height;
         }
     }
 

@@ -3,6 +3,6 @@
 
 #include <vulkan_wrapper.h>
 
-VkResult buildShader(const char *data, VkShaderStageFlagBits type, VkDevice vkDevice, VkShaderModule* shaderOut);
+VkResult buildShader(const char *data, VkShaderStageFlagBits type, VkDevice vkDevice, VkShaderModule *shaderOut);
 
 #endif //_VK_UTILS_H_
