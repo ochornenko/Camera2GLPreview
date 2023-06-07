@@ -27,6 +27,7 @@ android {
             path "CMakeLists.txt"
         }
     }
+    namespace 'com.media.camera.preview'
 }
 
 dependencies {
