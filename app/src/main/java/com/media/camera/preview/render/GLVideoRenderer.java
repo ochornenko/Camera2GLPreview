@@ -50,7 +50,7 @@ public class GLVideoRenderer extends VideoRenderer implements GLSurfaceView.Rend
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        init(null, width, height);
+        init(null, null, width, height);
     }
 
     @Override

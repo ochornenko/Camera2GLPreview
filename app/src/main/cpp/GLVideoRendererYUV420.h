@@ -12,7 +12,7 @@ public:
 
     virtual ~GLVideoRendererYUV420();
 
-    virtual void init(ANativeWindow *window, size_t width, size_t height) override;
+    virtual void init(ANativeWindow *window, AAssetManager *assetManager, size_t width, size_t height) override;
 
     virtual void render() override;
 
@@ -25,12 +25,6 @@ public:
 
     virtual uint32_t getParameters() override;
 
-    virtual bool createTextures() override;
-
-    virtual bool updateTextures() override;
-
-    virtual void deleteTextures() override;
-
     virtual int createProgram(const char *pVertexSource, const char *pFragmentSource) override;
 
 protected:
@@ -40,6 +34,10 @@ protected:
     GLuint m_vertexShader;
     GLuint m_pixelShader;
 private:
+    bool createTextures();
+    bool updateTextures();
+    void deleteTextures();
+
     std::unique_ptr<uint8_t[]> m_pDataY;
 
     uint8_t *m_pDataU;

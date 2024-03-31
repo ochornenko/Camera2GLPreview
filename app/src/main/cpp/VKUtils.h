@@ -1,8 +1,9 @@
 #ifndef _VK_UTILS_H_
 #define _VK_UTILS_H_
 
-#include <vulkan_wrapper.h>
+#include <android/asset_manager_jni.h>
+#include <vulkan/vulkan.h>
 
-VkResult buildShader(const char *data, VkShaderStageFlagBits type, VkDevice vkDevice, VkShaderModule *shaderOut);
+bool createShaderModuleFromAsset(VkDevice device, const char *shaderFilePath, AAssetManager *assetManager, VkShaderModule *shaderModule);
 
 #endif //_VK_UTILS_H_

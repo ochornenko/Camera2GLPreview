@@ -5,6 +5,7 @@
 
 #include <memory>
 #include <jni.h>
+#include <android/asset_manager.h>
 
 class VideoRendererContext {
 public:
@@ -16,7 +17,7 @@ public:
 
     ~VideoRendererContext();
 
-    void init(ANativeWindow *window, size_t width, size_t height);
+    void init(ANativeWindow *window, AAssetManager *assetManager, size_t width, size_t height);
 
     void render();
 

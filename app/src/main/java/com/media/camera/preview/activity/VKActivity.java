@@ -18,7 +18,7 @@ public class VKActivity extends BaseActivity {
         setContentView(R.layout.activity_vk);
 
         SurfaceView surfaceView = findViewById(R.id.surface_view);
-        mVideoRenderer = new VKVideoRenderer();
+        mVideoRenderer = new VKVideoRenderer(getApplicationContext());
         mVideoRenderer.init(surfaceView);
 
         ((FrameLayout) findViewById(R.id.preview)).addView(mPreview);

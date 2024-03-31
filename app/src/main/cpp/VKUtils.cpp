@@ -1,59 +1,29 @@
 #include "VKUtils.h"
 #include "Log.h"
 
-#include <shaderc/shaderc.hpp>
+#include <cassert>
+#include <vector>
 
-shaderc_shader_kind getShadercShaderType(VkShaderStageFlagBits type) {
-    switch (type) {
-        case VK_SHADER_STAGE_VERTEX_BIT:
-            return shaderc_glsl_vertex_shader;
-        case VK_SHADER_STAGE_FRAGMENT_BIT:
-            return shaderc_glsl_fragment_shader;
-        case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
-            return shaderc_glsl_tess_control_shader;
-        case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
-            return shaderc_glsl_tess_evaluation_shader;
-        case VK_SHADER_STAGE_GEOMETRY_BIT:
-            return shaderc_glsl_geometry_shader;
-        case VK_SHADER_STAGE_COMPUTE_BIT:
-            return shaderc_glsl_compute_shader;
-        default:
-            LOGE("invalid VKShaderStageFlagBits", "type = %08x", type);
-    }
-    return static_cast<shaderc_shader_kind>(-1);
-}
+bool createShaderModuleFromAsset(VkDevice device, const char *shaderFilePath,
+                                 AAssetManager *assetManager,
+                                 VkShaderModule *shaderModule) {
+    // Read shader file from asset.
+    AAsset *shaderFile = AAssetManager_open(assetManager, shaderFilePath,
+                                            AASSET_MODE_BUFFER);
+    RET_CHECK(shaderFile != nullptr);
+    const size_t shaderSize = AAsset_getLength(shaderFile);
+    std::vector<char> shader(shaderSize);
+    int status = AAsset_read(shaderFile, shader.data(), shaderSize);
+    AAsset_close(shaderFile);
+    RET_CHECK(status >= 0);
 
-// Create VK shader module from given glsl shader source text
-VkResult buildShader(const char *data, VkShaderStageFlagBits type, VkDevice vkDevice,
-                     VkShaderModule *shaderOut) {
-
-    // compile into spir-V shader
-    shaderc_compiler_t compiler = shaderc_compiler_initialize();
-    shaderc_compilation_result_t spvShader = shaderc_compile_into_spv(compiler,
-                                                                      data,
-                                                                      strlen(data),
-                                                                      getShadercShaderType(type),
-                                                                      "shaderc_error",
-                                                                      "main",
-                                                                      nullptr);
-    int status = shaderc_result_get_compilation_status(spvShader);
-    if (status != shaderc_compilation_status_success) {
-        LOGE("compilation status", "error = %d", status);
-        return static_cast<VkResult>(-1);
-    }
-
-    // build vulkan shader module
-    VkShaderModuleCreateInfo shaderModuleCreateInfo{
+    // Create shader module.
+    const VkShaderModuleCreateInfo shaderDesc = {
             .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-            .pNext = nullptr,
             .flags = 0,
-            .codeSize = shaderc_result_get_length(spvShader),
-            .pCode = (const uint32_t *) shaderc_result_get_bytes(spvShader)
+            .codeSize = shaderSize,
+            .pCode = reinterpret_cast<const uint32_t *>(shader.data()),
     };
-    VkResult result = vkCreateShaderModule(vkDevice, &shaderModuleCreateInfo, nullptr, shaderOut);
-
-    shaderc_result_release(spvShader);
-    shaderc_compiler_release(compiler);
-
-    return result;
+    CALL_VK_RET(vkCreateShaderModule(device, &shaderDesc, nullptr, shaderModule))
+    return true;
 }

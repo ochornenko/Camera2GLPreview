@@ -9,8 +9,8 @@ VideoRendererContext::VideoRendererContext(int type) {
 
 VideoRendererContext::~VideoRendererContext() = default;
 
-void VideoRendererContext::init(ANativeWindow *window, size_t width, size_t height) {
-    m_pVideoRenderer->init(window, width, height);
+void VideoRendererContext::init(ANativeWindow *window, AAssetManager *assetManager, size_t width, size_t height) {
+    m_pVideoRenderer->init(window, assetManager, width, height);
 }
 
 void VideoRendererContext::render() {

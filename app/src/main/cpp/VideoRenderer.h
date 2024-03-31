@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <memory>
 #include <android/native_window.h>
+#include <android/asset_manager.h>
 
 enum {
     tYUV420, tVK_YUV420, tYUV420_FILTER
@@ -27,7 +28,7 @@ public:
 
     static std::unique_ptr<VideoRenderer> create(int type);
 
-    virtual void init(ANativeWindow *window, size_t width, size_t height) = 0;
+    virtual void init(ANativeWindow *window, AAssetManager *assetManager, size_t width, size_t height) = 0;
 
     virtual void render() = 0;
 
@@ -39,12 +40,6 @@ public:
     virtual void setParameters(uint32_t params) = 0;
 
     virtual uint32_t getParameters() = 0;
-
-    virtual bool createTextures() = 0;
-
-    virtual bool updateTextures() = 0;
-
-    virtual void deleteTextures() = 0;
 
     virtual int createProgram(const char *pVertexSource, const char *pFragmentSource) = 0;
 

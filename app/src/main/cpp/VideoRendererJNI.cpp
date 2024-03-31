@@ -2,6 +2,7 @@
 #include "VideoRendererContext.h"
 
 #include <android/native_window_jni.h>
+#include <android/asset_manager_jni.h>
 
 JCMCPRV(void, create)(JNIEnv *env, jobject obj, jint type) {
     VideoRendererContext::createContext(env, obj, type);
@@ -11,12 +12,14 @@ JCMCPRV(void, destroy)(JNIEnv *env, jobject obj) {
     VideoRendererContext::deleteContext(env, obj);
 }
 
-JCMCPRV(void, init)(JNIEnv *env, jobject obj, jobject surface, jint width, jint height) {
+JCMCPRV(void, init)(JNIEnv *env, jobject obj, jobject surface, jobject assetManager, jint width, jint height) {
     VideoRendererContext *context = VideoRendererContext::getContext(env, obj);
 
     ANativeWindow *window = surface ? ANativeWindow_fromSurface(env, surface) : nullptr;
 
-    if (context) context->init(window, (size_t) width, (size_t) height);
+    auto *aAssetManager = assetManager ? AAssetManager_fromJava(env, assetManager) : nullptr;
+
+    if (context) context->init(window, aAssetManager, (size_t) width, (size_t) height);
 }
 
 JCMCPRV(void, render)(JNIEnv *env, jobject obj) {

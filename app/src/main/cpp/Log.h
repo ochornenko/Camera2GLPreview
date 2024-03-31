@@ -13,4 +13,28 @@
 #define LOGI(...)
 #endif
 
+#define CALL_VK_RET(func)                                     \
+  if (VK_SUCCESS != (func)) {                                 \
+    LOGE("Error File[%s], line[%d]", __FILE__, __LINE__);     \
+    return false;                                             \
+  }
+
+#define CALL_VK(func)                                         \
+  if (VK_SUCCESS != (func)) {                                 \
+    LOGE("Error File[%s], line[%d]", __FILE__, __LINE__);     \
+    assert(false);                                            \
+  }
+
+// A macro to check value is VK_SUCCESS
+#define VK_CHECK(x) CALL_VK(x)
+
+// Log an error and return false if condition fails
+#define RET_CHECK(condition)                                                    \
+    do {                                                                        \
+        if (!(condition)) {                                                     \
+            LOGE("Check failed at %s:%u - %s", __FILE__, __LINE__, #condition); \
+            assert(false);                                                      \
+        }                                                                       \
+    } while (0)
+
 #endif // _LOG_H_

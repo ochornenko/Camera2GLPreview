@@ -1,4 +1,0 @@
-builders: [cmake]
-
-dependencies:
-- compile: com.github.ggfan:shaderc:0.0.1

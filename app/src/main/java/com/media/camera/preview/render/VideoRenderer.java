@@ -1,5 +1,6 @@
 package com.media.camera.preview.render;
 
+import android.content.res.AssetManager;
 import android.view.Surface;
 
 /**
@@ -27,7 +28,7 @@ public abstract class VideoRenderer {
 
     protected native void destroy();
 
-    protected native void init(Surface surface, int width, int height);
+    protected native void init(Surface surface, AssetManager assetManager, int width, int height);
 
     protected native void render();
 

@@ -1,12 +1,15 @@
 package com.media.camera.preview.render;
 
+import android.content.Context;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 public class VKVideoRenderer extends VideoRenderer implements SurfaceHolder.Callback {
 
-    public VKVideoRenderer() {
+    private final Context mContext;
 
+    public VKVideoRenderer(Context context) {
+        mContext = context;
     }
 
     public void init(SurfaceView surface) {
@@ -24,7 +27,7 @@ public class VKVideoRenderer extends VideoRenderer implements SurfaceHolder.Call
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        init(holder.getSurface(), width, height);
+        init(holder.getSurface(), mContext.getAssets(), width, height);
     }
 
     @Override

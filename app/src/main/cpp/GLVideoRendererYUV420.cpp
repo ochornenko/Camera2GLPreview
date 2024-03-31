@@ -33,7 +33,8 @@ GLVideoRendererYUV420::~GLVideoRendererYUV420() {
     delete_program(m_program);
 }
 
-void GLVideoRendererYUV420::init(ANativeWindow *window, size_t width, size_t height) {
+void GLVideoRendererYUV420::init(ANativeWindow *window, AAssetManager *assetManager, size_t width,
+                                 size_t height) {
     m_backingWidth = width;
     m_backingHeight = height;
 }

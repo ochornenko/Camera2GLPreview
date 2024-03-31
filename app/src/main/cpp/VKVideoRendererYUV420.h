@@ -4,7 +4,7 @@
 #define _VK_VIDEO_RENDERER_YUV_H_
 
 #include "VideoRenderer.h"
-#include "vulkan_wrapper.h"
+#include <vulkan/vulkan.h>
 
 class VKVideoRendererYUV420 : public VideoRenderer {
 public:
@@ -12,7 +12,7 @@ public:
 
     virtual ~VKVideoRendererYUV420();
 
-    virtual void init(ANativeWindow *window, size_t width, size_t height) override;
+    virtual void init(ANativeWindow *window, AAssetManager *assetManager, size_t width, size_t height) override;
 
     virtual void render() override;
 
@@ -24,12 +24,6 @@ public:
     virtual void setParameters(uint32_t params) override;
 
     virtual uint32_t getParameters() override;
-
-    virtual bool createTextures() override;
-
-    virtual bool updateTextures() override;
-
-    virtual void deleteTextures() override;
 
     virtual int createProgram(const char *pVertexSource, const char *pFragmentSource) override;
 
@@ -131,6 +125,8 @@ private:
     uint32_t m_indexCount;
     __unused  size_t m_length;
 
+    AAssetManager *m_assetManager;
+
     void createDevice(ANativeWindow *platformWindow, VkApplicationInfo *appInfo);
 
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
@@ -140,7 +136,7 @@ private:
 
     void createDescriptorSet();
 
-    VkResult createGraphicsPipeline(const char *pVertexSource, const char *pFragmentSource);
+    VkResult createGraphicsPipeline();
 
     void createFrameBuffers(VkImageView depthView = VK_NULL_HANDLE);
 
@@ -156,6 +152,8 @@ private:
 
     void createCommandPool();
 
+    bool createTextures();
+
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
     static void copyTextureData(VulkanTexture *texture, uint8_t *data);
@@ -163,6 +161,8 @@ private:
     void updateDescriptorSet();
 
     void updateUniformBuffers();
+
+    bool updateTextures();
 
     bool mapMemoryTypeToIndex(uint32_t typeBits, VkFlags requirements_mask, uint32_t *typeIndex) const;
 
@@ -173,6 +173,8 @@ private:
     void deleteRenderPass() const;
 
     void deleteGraphicsPipeline();
+
+    void deleteTextures() const;
 
     void deleteBuffers() const;
 

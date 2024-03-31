@@ -1,21 +1,13 @@
 #include "VKVideoRendererYUV420.h"
 #include "VKUtils.h"
-#include "VKShaders.h"
 #include "CommonUtils.h"
 #include "Log.h"
 
 #include <cassert>
 #include <vector>
 #include <cstring>
-
-#define CALL_VK(func)                                         \
-  if (VK_SUCCESS != (func)) {                                 \
-    LOGE("Error File[%s], line[%d]", __FILE__, __LINE__);     \
-    assert(false);                                            \
-  }
-
-// A macro to check value is VK_SUCCESS
-#define VK_CHECK(x) CALL_VK(x)
+#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_android.h>
 
 VKVideoRendererYUV420::VKVideoRendererYUV420()
         : texType{tTexY, tTexU, tTexV},
@@ -47,21 +39,19 @@ void VKVideoRendererYUV420::createRenderPipeline() {
     createIndexBuffer();
     createUniformBuffers();
     createTextures();
-    createProgram(kVertexShader, kFragmentShader); // Create graphics pipeline
+    createProgram(nullptr, nullptr); // Create graphics pipeline
     createDescriptorSet();
     createCommandPool();
 
     m_deviceInfo.initialized = true;
 }
 
-void VKVideoRendererYUV420::init(ANativeWindow *window, size_t width, size_t height) {
+void VKVideoRendererYUV420::init(ANativeWindow *window, AAssetManager *assetManager, size_t width,
+                                 size_t height) {
     m_backingWidth = width;
     m_backingHeight = height;
 
-    if (!InitVulkan()) {
-        LOGE("Vulkan is unavailable, install vulkan and re-start");
-        return;
-    }
+    m_assetManager = assetManager;
 
     VkApplicationInfo appInfo = {
             .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -211,8 +201,8 @@ bool VKVideoRendererYUV420::updateTextures() {
     return true;
 }
 
-void VKVideoRendererYUV420::deleteTextures() {
-    for (auto &texture : textures) {
+void VKVideoRendererYUV420::deleteTextures() const {
+    for (auto &texture: textures) {
         vkDestroyImageView(m_deviceInfo.device, texture.view, nullptr);
         vkDestroyImage(m_deviceInfo.device, texture.image, nullptr);
         vkDestroySampler(m_deviceInfo.device, texture.sampler, nullptr);
@@ -226,7 +216,7 @@ void VKVideoRendererYUV420::deleteRenderPass() const {
 }
 
 int VKVideoRendererYUV420::createProgram(const char *pVertexSource, const char *pFragmentSource) {
-    return createGraphicsPipeline(pVertexSource, pFragmentSource);
+    return createGraphicsPipeline();
 }
 
 void
@@ -538,8 +528,7 @@ void VKVideoRendererYUV420::setImageLayout(VkCommandBuffer cmdBuffer, VkImage im
 }
 
 // Create Graphics Pipeline
-VkResult VKVideoRendererYUV420::createGraphicsPipeline(const char *pVertexSource,
-                                                       const char *pFragmentSource) {
+VkResult VKVideoRendererYUV420::createGraphicsPipeline() {
     memset(&m_gfxPipeline, 0, sizeof(m_gfxPipeline));
 
     const VkDescriptorSetLayoutBinding descriptorSetLayoutBinding[2]{
@@ -585,9 +574,12 @@ VkResult VKVideoRendererYUV420::createGraphicsPipeline(const char *pVertexSource
             .pDynamicStates = nullptr};
 
     VkShaderModule vertexShader, fragmentShader;
-    buildShader(pVertexSource, VK_SHADER_STAGE_VERTEX_BIT, m_deviceInfo.device, &vertexShader);
-    buildShader(pFragmentSource, VK_SHADER_STAGE_FRAGMENT_BIT, m_deviceInfo.device,
-                &fragmentShader);
+
+    RET_CHECK(createShaderModuleFromAsset(m_deviceInfo.device, "shaders/video_frame.vert.spv",
+                                          m_assetManager, &vertexShader));
+    RET_CHECK(createShaderModuleFromAsset(m_deviceInfo.device, "shaders/video_frame.frag.spv",
+                                          m_assetManager, &fragmentShader));
+
     // Specify vertex and fragment shader stages
     VkPipelineShaderStageCreateInfo shaderStages[2]{
             {
