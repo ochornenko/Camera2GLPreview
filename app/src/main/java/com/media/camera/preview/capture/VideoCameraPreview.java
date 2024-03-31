@@ -93,7 +93,6 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
     }
 
     public void stopCamera() {
-        mImageReader.setOnImageAvailableListener(null, null);
         closeCamera();
         stopBackgroundThread();
         setVisibility(View.GONE);
