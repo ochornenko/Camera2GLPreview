@@ -872,13 +872,12 @@ void VKVideoRendererYUV420::createCommandPool() {
                        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
-        // Now we start a renderpass. Any draw command has to be recorded in a renderpass
-        VkClearValue clearVals{
-                .color.float32[0] = 0.0f,
-                .color.float32[1] = 0.0f,
-                .color.float32[2] = 0.0f,
-                .color.float32[3] = 1.0f,
-        };
+        // Now we start a render pass. Any draw command has to be recorded in a render pass
+        VkClearValue clearValues;
+        clearValues.color.float32[0] = 0.0f;
+        clearValues.color.float32[1] = 0.0f;
+        clearValues.color.float32[2] = 0.0f;
+        clearValues.color.float32[3] = 1.0f;
 
         VkRenderPassBeginInfo renderPassBeginInfo{
                 .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
@@ -888,7 +887,7 @@ void VKVideoRendererYUV420::createCommandPool() {
                 .renderArea = {.offset = {.x = 0, .y = 0},
                         .extent = m_swapchainInfo.displaySize},
                 .clearValueCount = 1,
-                .pClearValues = &clearVals};
+                .pClearValues = &clearValues};
         vkCmdBeginRenderPass(m_render.cmdBuffer[bufferIndex], &renderPassBeginInfo,
                              VK_SUBPASS_CONTENTS_INLINE);
         // Bind what is necessary to the command buffer
@@ -1363,25 +1362,26 @@ VKVideoRendererYUV420::loadTexture(uint8_t *buffer, TextureType type, size_t wid
         setImageLayout(gfxCmd, texture->image, VK_IMAGE_LAYOUT_UNDEFINED,
                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                        VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
-        VkImageCopy bltInfo{
-                .srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .srcSubresource.mipLevel = 0,
-                .srcSubresource.baseArrayLayer = 0,
-                .srcSubresource.layerCount = 1,
-                .srcOffset.x = 0,
-                .srcOffset.y = 0,
-                .srcOffset.z = 0,
-                .dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .dstSubresource.mipLevel = 0,
-                .dstSubresource.baseArrayLayer = 0,
-                .dstSubresource.layerCount = 1,
-                .dstOffset.x = 0,
-                .dstOffset.y = 0,
-                .dstOffset.z = 0,
-                .extent.width = static_cast<uint32_t>(texture->width),
-                .extent.height = static_cast<uint32_t>(texture->height),
-                .extent.depth = 1,
-        };
+
+        VkImageCopy bltInfo;
+        bltInfo.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        bltInfo.srcSubresource.mipLevel = 0;
+        bltInfo.srcSubresource.baseArrayLayer = 0;
+        bltInfo.srcSubresource.layerCount = 1;
+        bltInfo.srcOffset.x = 0;
+        bltInfo.srcOffset.y = 0;
+        bltInfo.srcOffset.z = 0;
+        bltInfo.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        bltInfo.dstSubresource.mipLevel = 0;
+        bltInfo.dstSubresource.baseArrayLayer = 0;
+        bltInfo.dstSubresource.layerCount = 1;
+        bltInfo.dstOffset.x = 0;
+        bltInfo.dstOffset.y = 0;
+        bltInfo.dstOffset.z = 0;
+        bltInfo.extent.width = static_cast<uint32_t>(texture->width);
+        bltInfo.extent.height = static_cast<uint32_t>(texture->height);
+        bltInfo.extent.depth = 1;
+
         vkCmdCopyImage(gfxCmd, stageImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                        texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
                        &bltInfo);
