@@ -4,6 +4,7 @@
 #include <android/asset_manager_jni.h>
 #include <vulkan/vulkan.h>
 
-bool createShaderModuleFromAsset(VkDevice device, const char *shaderFilePath, AAssetManager *assetManager, VkShaderModule *shaderModule);
+bool createShaderModuleFromAsset(VkDevice device, const char *shaderFilePath,
+                                 AAssetManager *assetManager, VkShaderModule *shaderModule);
 
 #endif //_VK_UTILS_H_

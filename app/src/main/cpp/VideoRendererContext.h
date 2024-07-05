@@ -13,7 +13,7 @@ public:
         jfieldID context;
     };
 
-    VideoRendererContext(int type);
+    explicit VideoRendererContext(int type);
 
     ~VideoRendererContext();
 

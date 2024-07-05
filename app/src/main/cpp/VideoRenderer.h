@@ -1,7 +1,7 @@
 #ifndef _H_VIDEO_RENDERER_
 #define _H_VIDEO_RENDERER_
 
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <android/native_window.h>
 #include <android/asset_manager.h>

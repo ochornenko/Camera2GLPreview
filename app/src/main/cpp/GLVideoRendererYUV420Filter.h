@@ -9,13 +9,13 @@ class GLVideoRendererYUV420Filter : public GLVideoRendererYUV420 {
 public:
     GLVideoRendererYUV420Filter();
 
-    virtual ~GLVideoRendererYUV420Filter();
+    ~GLVideoRendererYUV420Filter() override;
 
-    virtual void render() override;
+    void render() override;
 
-    virtual void setParameters(uint32_t params) override;
+    void setParameters(uint32_t params) override;
 
-    virtual uint32_t getParameters() override;
+    uint32_t getParameters() override;
 
 private:
     size_t m_filter = 0;

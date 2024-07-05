@@ -10,22 +10,22 @@ class GLVideoRendererYUV420 : public VideoRenderer {
 public:
     GLVideoRendererYUV420();
 
-    virtual ~GLVideoRendererYUV420();
+    ~GLVideoRendererYUV420() override;
 
-    virtual void init(ANativeWindow *window, AAssetManager *assetManager, size_t width, size_t height) override;
+    void
+    init(ANativeWindow *window, AAssetManager *assetManager, size_t width, size_t height) override;
 
-    virtual void render() override;
+    void render() override;
 
-    virtual void updateFrame(const video_frame &frame) override;
+    void updateFrame(const video_frame &frame) override;
 
-    virtual void
-    draw(uint8_t *buffer, size_t length, size_t width, size_t height, float rotation) override;
+    void draw(uint8_t *buffer, size_t length, size_t width, size_t height, float rotation) override;
 
-    virtual void setParameters(uint32_t params) override;
+    void setParameters(uint32_t params) override;
 
-    virtual uint32_t getParameters() override;
+    uint32_t getParameters() override;
 
-    virtual int createProgram(const char *pVertexSource, const char *pFragmentSource) override;
+    int createProgram(const char *pVertexSource, const char *pFragmentSource) override;
 
 protected:
     virtual GLuint useProgram();
@@ -35,7 +35,9 @@ protected:
     GLuint m_pixelShader;
 private:
     bool createTextures();
+
     bool updateTextures();
+
     void deleteTextures();
 
     std::unique_ptr<uint8_t[]> m_pDataY;

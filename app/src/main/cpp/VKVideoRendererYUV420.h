@@ -10,22 +10,22 @@ class VKVideoRendererYUV420 : public VideoRenderer {
 public:
     VKVideoRendererYUV420();
 
-    virtual ~VKVideoRendererYUV420();
+    ~VKVideoRendererYUV420() override;
 
-    virtual void init(ANativeWindow *window, AAssetManager *assetManager, size_t width, size_t height) override;
+    void
+    init(ANativeWindow *window, AAssetManager *assetManager, size_t width, size_t height) override;
 
-    virtual void render() override;
+    void render() override;
 
-    virtual void updateFrame(const video_frame &frame) override;
+    void updateFrame(const video_frame &frame) override;
 
-    virtual void
-    draw(uint8_t *buffer, size_t length, size_t width, size_t height, float rotation) override;
+    void draw(uint8_t *buffer, size_t length, size_t width, size_t height, float rotation) override;
 
-    virtual void setParameters(uint32_t params) override;
+    void setParameters(uint32_t params) override;
 
-    virtual uint32_t getParameters() override;
+    uint32_t getParameters() override;
 
-    virtual int createProgram(const char *pVertexSource, const char *pFragmentSource) override;
+    int createProgram(const char *pVertexSource, const char *pFragmentSource) override;
 
 private:
     enum TextureType {
@@ -164,7 +164,8 @@ private:
 
     bool updateTextures();
 
-    bool mapMemoryTypeToIndex(uint32_t typeBits, VkFlags requirements_mask, uint32_t *typeIndex) const;
+    bool
+    mapMemoryTypeToIndex(uint32_t typeBits, VkFlags requirements_mask, uint32_t *typeIndex) const;
 
     void deleteSwapChain() const;
 
@@ -185,14 +186,15 @@ private:
     VkResult allocateMemoryTypeFromProperties(uint32_t typeBits, VkFlags requirements_mask,
                                               uint32_t *typeIndex);
 
-    static size_t getBufferOffset(VulkanTexture *texture, TextureType type, size_t width, size_t height);
+    static size_t
+    getBufferOffset(VulkanTexture *texture, TextureType type, size_t width, size_t height);
 
     static void setImageLayout(VkCommandBuffer cmdBuffer,
-                        VkImage image,
-                        VkImageLayout oldImageLayout,
-                        VkImageLayout newImageLayout,
-                        VkPipelineStageFlags srcStages,
-                        VkPipelineStageFlags destStages);
+                               VkImage image,
+                               VkImageLayout oldImageLayout,
+                               VkImageLayout newImageLayout,
+                               VkPipelineStageFlags srcStages,
+                               VkPipelineStageFlags destStages);
 
     VkResult loadTexture(uint8_t *buffer, TextureType type, size_t width, size_t height,
                          VulkanTexture *texture, VkImageUsageFlags usage, VkFlags required_props);
