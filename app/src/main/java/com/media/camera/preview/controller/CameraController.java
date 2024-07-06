@@ -1,6 +1,9 @@
-package com.media.camera.preview.capture;
+package com.media.camera.preview.controller;
+
+import static android.support.v4.content.ContextCompat.checkSelfPermission;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
@@ -16,12 +19,14 @@ import android.media.ImageReader;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.util.Size;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
-import android.view.View;
+import android.util.SparseIntArray;
+import android.view.Surface;
+
+import com.media.camera.preview.capture.PreviewFrameHandler;
+import com.media.camera.preview.capture.VideoCapture;
+import com.media.camera.preview.render.VideoRenderer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,15 +35,22 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Created by oleg on 11/2/17.
- */
+public class CameraController implements PreviewFrameHandler {
+    private static final String TAG = CameraController.class.toString();
+    private static final int IMAGE_BUFFER_SIZE = 3;
 
-public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Callback {
-    private static final String TAG = VideoCameraPreview.class.toString();
+    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
 
-    private final VideoCapture mVideoCapture;
+    static {
+        ORIENTATIONS.append(Surface.ROTATION_0, 90);
+        ORIENTATIONS.append(Surface.ROTATION_90, 0);
+        ORIENTATIONS.append(Surface.ROTATION_180, 270);
+        ORIENTATIONS.append(Surface.ROTATION_270, 180);
+    }
+
     private final Context mContext;
+    private final VideoRenderer mVideoRenderer;
+    private final VideoCapture mVideoCapture;
     private final Semaphore mCameraOpenCloseLock = new Semaphore(1);
     private CameraCaptureSession mCaptureSession;
     private CameraDevice mCameraDevice;
@@ -50,33 +62,15 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
     private List<Size> mOutputSizes = new ArrayList<>();
     private Size mPreviewSize;
 
-    public VideoCameraPreview(Context context) {
-        super(context);
-
+    public CameraController(Context context, VideoRenderer videoRenderer) {
         mContext = context;
-        mVideoCapture = new VideoCapture((PreviewFrameHandler) context);
-        getHolder().addCallback(this);
-        setVisibility(View.GONE);
+        mVideoRenderer = videoRenderer;
+        mVideoCapture = new VideoCapture(this);
     }
 
-    public void init(int w, int h) {
-        mPreviewSize = getOptimalPreviewSize(w, h);
-    }
-
-    public void surfaceCreated(SurfaceHolder holder) {
-
-    }
-
-    public void surfaceDestroyed(SurfaceHolder holder) {
-
-    }
-
-    public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
-        if (null == mImageReader && null != mPreviewSize) {
-            mImageReader = ImageReader.newInstance(mPreviewSize.getWidth(), mPreviewSize.getHeight(), ImageFormat.YUV_420_888, 2);
-            mImageReader.setOnImageAvailableListener(mVideoCapture, mBackgroundHandler);
-            openCamera();
-        }
+    @Override
+    public void onPreviewFrame(byte[] data, int width, int height) {
+        mVideoRenderer.drawVideoFrame(data, width, height, getOrientation());
     }
 
     public Integer getSensorOrientation() {
@@ -87,32 +81,43 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
         return mOutputSizes;
     }
 
+    public void initialize(int width, int height) {
+        mPreviewSize = getOptimalPreviewSize(width, height);
+
+        openCamera();
+    }
+
+    public void destroy() {
+        mVideoRenderer.destroyRenderer();
+    }
+
     public void startCamera() {
         startBackgroundThread();
-        setVisibility(View.VISIBLE);
     }
 
     public void stopCamera() {
         closeCamera();
         stopBackgroundThread();
-        setVisibility(View.GONE);
     }
 
     public void changeSize(Size size) {
         mPreviewSize = size;
 
         stopCamera();
+        openCamera();
         startCamera();
     }
 
     /**
-     * Opens the camera specified by {@link VideoCameraPreview#}.
+     * Opens the camera.
      */
     public void openCamera() {
-        if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
+        if (checkSelfPermission(mContext, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
+
+        mImageReader = ImageReader.newInstance(mPreviewSize.getWidth(), mPreviewSize.getHeight(), ImageFormat.YUV_420_888, IMAGE_BUFFER_SIZE);
+        mImageReader.setOnImageAvailableListener(mVideoCapture, mBackgroundHandler);
 
         Log.i(TAG, "openCamera");
 
@@ -123,7 +128,7 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
             }
             manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
         } catch (CameraAccessException e) {
-            Log.e(TAG, "Cannot access the camera." + e.toString());
+            Log.e(TAG, "Cannot access the camera " + e);
         } catch (InterruptedException e) {
             throw new RuntimeException("Interrupted while trying to lock camera opening.", e);
         }
@@ -175,7 +180,7 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
             mBackgroundThread = null;
             mBackgroundHandler = null;
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Log.e(TAG, "stopBackgroundThread " + e);
         }
     }
 
@@ -186,7 +191,7 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
             builder.addTarget(mImageReader.getSurface());
             return builder.build();
         } catch (CameraAccessException e) {
-            Log.e(TAG, e.getMessage());
+            Log.e(TAG, "createCaptureRequest " + e);
             return null;
         }
     }
@@ -226,7 +231,7 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
                     sessionStateCallback, mBackgroundHandler);
 
         } catch (CameraAccessException e) {
-            Log.e(TAG, "createCaptureSession " + e.toString());
+            Log.e(TAG, "createCaptureSession " + e);
         }
     }
 
@@ -245,7 +250,7 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
                     Log.e(TAG, "captureRequest is null");
                 }
             } catch (CameraAccessException e) {
-                Log.e(TAG, "onConfigured " + e.toString());
+                Log.e(TAG, "onConfigured " + e);
             }
         }
 
@@ -304,7 +309,6 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
 
         // Cannot find preview size that matches the aspect ratio, ignore the requirement
         if (optimalSize == null) {
-            minDiff = Double.MAX_VALUE;
             for (Size size : mOutputSizes) {
                 if (Math.abs(size.getHeight() - h) < minDiff) {
                     optimalSize = size;
@@ -314,5 +318,10 @@ public class VideoCameraPreview extends SurfaceView implements SurfaceHolder.Cal
         }
 
         return optimalSize;
+    }
+
+    private int getOrientation() {
+        int rotation = ((Activity) mContext).getWindowManager().getDefaultDisplay().getRotation();
+        return (ORIENTATIONS.get(rotation) + getSensorOrientation() + 270) % 360;
     }
 }

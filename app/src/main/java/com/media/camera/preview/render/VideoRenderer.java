@@ -38,6 +38,12 @@ public abstract class VideoRenderer {
 
     protected native int getParameters();
 
+    public abstract void drawVideoFrame(byte[] data, int width, int height, int rotation);
+
+    public void destroyRenderer() {
+        destroy();
+    }
+
     static {
         System.loadLibrary("media-lib");
     }

@@ -20,11 +20,11 @@ VideoRenderer::~VideoRenderer() = default;
 std::unique_ptr<VideoRenderer> VideoRenderer::create(int type) {
     switch (type) {
         case tYUV420_FILTER:
-            return std::unique_ptr<VideoRenderer>(std::make_unique<GLVideoRendererYUV420Filter>());
+            return {std::make_unique<GLVideoRendererYUV420Filter>()};
         case tVK_YUV420:
-            return std::unique_ptr<VideoRenderer>(std::make_unique<VKVideoRendererYUV420>());
+            return {std::make_unique<VKVideoRendererYUV420>()};
         case tYUV420:
         default:
-            return std::unique_ptr<VideoRenderer>(std::make_unique<GLVideoRendererYUV420>());
+            return {std::make_unique<GLVideoRendererYUV420>()};
     }
 }

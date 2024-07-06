@@ -9,35 +9,25 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
 import android.util.Size;
-import android.util.SparseIntArray;
 import android.view.MotionEvent;
-import android.view.Surface;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.widget.TextView;
 
 import com.media.camera.preview.R;
 import com.media.camera.preview.adapter.ItemAdapter;
-import com.media.camera.preview.capture.PreviewFrameHandler;
-import com.media.camera.preview.capture.VideoCameraPreview;
+import com.media.camera.preview.controller.CameraController;
 import com.media.camera.preview.gesture.SimpleGestureFilter;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class BaseActivity extends FragmentActivity implements PreviewFrameHandler,
-        SimpleGestureFilter.SimpleGestureListener {
+public abstract class BaseActivity extends FragmentActivity implements SimpleGestureFilter.SimpleGestureListener {
 
-    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
-    protected VideoCameraPreview mPreview;
+    protected CameraController mCameraController;
     protected SimpleGestureFilter mDetector;
     protected ResolutionDialog mResolutionDialog;
     protected int mParams;
-
-    static {
-        ORIENTATIONS.append(Surface.ROTATION_0, 90);
-        ORIENTATIONS.append(Surface.ROTATION_90, 0);
-        ORIENTATIONS.append(Surface.ROTATION_180, 270);
-        ORIENTATIONS.append(Surface.ROTATION_270, 180);
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,21 +36,33 @@ public abstract class BaseActivity extends FragmentActivity implements PreviewFr
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 
-        mPreview = new VideoCameraPreview(this);
         mDetector = new SimpleGestureFilter(this, this);
         mResolutionDialog = new ResolutionDialog(this);
-        mPreview.init(displayMetrics.widthPixels, displayMetrics.heightPixels);
+    }
+
+    protected void setup(SurfaceView surfaceView) {
+        surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+
+            }
+
+            @Override
+            public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
+                mCameraController.initialize(width, height);
+            }
+
+            @Override
+            public void surfaceCreated(@NonNull SurfaceHolder holder) {
+
+            }
+        });
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         mDetector.onTouchEvent(event);
         return super.onTouchEvent(event);
-    }
-
-    protected int getOrientation() {
-        int rotation = getWindowManager().getDefaultDisplay().getRotation();
-        return (ORIENTATIONS.get(rotation) + mPreview.getSensorOrientation() + 270) % 360;
     }
 
     public void showResolutionDialog(List<Size> items) {
@@ -98,7 +100,7 @@ public abstract class BaseActivity extends FragmentActivity implements PreviewFr
             ArrayList<Size> items = new ArrayList<>();
             ItemAdapter.ItemListener<Size> mListener = item -> {
                 dismiss();
-                mPreview.changeSize(item);
+                mCameraController.changeSize(item);
             };
             mAdapter = new ItemAdapter<>(items, mListener, R.layout.size_list_item);
             mRecyclerView.setAdapter(mAdapter);

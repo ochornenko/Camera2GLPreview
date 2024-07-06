@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.opengl.GLSurfaceView;
@@ -12,9 +11,9 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
-import android.widget.FrameLayout;
 
 import com.media.camera.preview.R;
+import com.media.camera.preview.controller.CameraController;
 import com.media.camera.preview.gesture.SimpleGestureFilter.SwipeDirection;
 import com.media.camera.preview.render.GLVideoRenderer;
 
@@ -35,17 +34,19 @@ public class GLActivity extends BaseActivity implements ActivityCompat.OnRequest
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gl);
 
-        GLSurfaceView glSurfaceView = findViewById(R.id.gl_surface_view);
+        GLSurfaceView glSurfaceView = findViewById(R.id.preview);
         mVideoRenderer = new GLVideoRenderer();
         mVideoRenderer.init(glSurfaceView);
 
-        ((FrameLayout) findViewById(R.id.preview)).addView(mPreview);
+        mCameraController = new CameraController(this, mVideoRenderer);
+
+        setup(glSurfaceView);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mVideoRenderer.destroyRender();
+        mCameraController.destroy();
     }
 
     @Override
@@ -54,22 +55,16 @@ public class GLActivity extends BaseActivity implements ActivityCompat.OnRequest
         if (!hasPermissionsGranted()) {
             requestCameraPermission();
         } else {
-            mPreview.startCamera();
+            mCameraController.startCamera();
         }
     }
 
     @Override
     public void onPause() {
         if (hasPermissionsGranted()) {
-            mPreview.stopCamera();
+            mCameraController.stopCamera();
         }
         super.onPause();
-    }
-
-    @Override
-    public void onPreviewFrame(byte[] data, int width, int height) {
-        mVideoRenderer.drawVideoFrame(data, width, height, getOrientation());
-        mVideoRenderer.requestRender();
     }
 
     @Override
@@ -87,7 +82,7 @@ public class GLActivity extends BaseActivity implements ActivityCompat.OnRequest
                         if (null != mErrorDialog) {
                             mErrorDialog.dismiss();
                         } else {
-                            mPreview.startCamera();
+                            mCameraController.startCamera();
                         }
                     }
                 }
@@ -120,7 +115,7 @@ public class GLActivity extends BaseActivity implements ActivityCompat.OnRequest
 
         switch (direction) {
             case SWIPE_UP:
-                showResolutionDialog(mPreview.getOutputSizes());
+                showResolutionDialog(mCameraController.getOutputSizes());
                 break;
             case SWIPE_RIGHT:
                 if (mFilter > 0) {
@@ -165,14 +160,11 @@ public class GLActivity extends BaseActivity implements ActivityCompat.OnRequest
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             final Activity activity = getActivity();
+            assert activity != null;
+            assert getArguments() != null;
             return new AlertDialog.Builder(activity)
                     .setMessage(getArguments().getString(ARG_MESSAGE))
-                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            activity.finish();
-                        }
-                    })
+                    .setPositiveButton(android.R.string.ok, (dialogInterface, i) -> activity.finish())
                     .create();
         }
     }
@@ -186,22 +178,12 @@ public class GLActivity extends BaseActivity implements ActivityCompat.OnRequest
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             final Activity activity = getActivity();
+            assert activity != null;
             return new AlertDialog.Builder(activity)
                     .setMessage(R.string.request_permission)
-                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            ActivityCompat.requestPermissions(activity, CAMERA_PERMISSIONS,
-                                    REQUEST_CAMERA_PERMISSION);
-                        }
-                    })
-                    .setNegativeButton(android.R.string.cancel,
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    activity.finish();
-                                }
-                            })
+                    .setPositiveButton(android.R.string.ok, (dialog, which) -> ActivityCompat
+                            .requestPermissions(activity, CAMERA_PERMISSIONS, REQUEST_CAMERA_PERMISSION))
+                    .setNegativeButton(android.R.string.cancel, (dialog, which) -> activity.finish())
                     .create();
         }
     }
