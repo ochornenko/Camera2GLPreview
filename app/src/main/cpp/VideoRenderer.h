@@ -31,8 +31,6 @@ public:
 
     virtual void render() = 0;
 
-    virtual void updateFrame(const video_frame &frame) = 0;
-
     virtual void
     draw(uint8_t *buffer, size_t length, size_t width, size_t height, float rotation, bool mirror) = 0;
 

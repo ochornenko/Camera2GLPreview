@@ -102,10 +102,6 @@ void VKVideoRendererYUV420::render() {
     vkQueuePresentKHR(m_deviceInfo.queue, &presentInfo);
 }
 
-void VKVideoRendererYUV420::updateFrame(const video_frame &frame) {
-
-}
-
 void VKVideoRendererYUV420::draw(uint8_t *buffer, size_t length, size_t width, size_t height,
                                  float rotation, bool mirror) {
     m_pBuffer = buffer;
