@@ -45,7 +45,14 @@ public class SimpleGestureFilter extends GestureDetector.SimpleOnGestureListener
         return false;
     }
 
+    @Override
+    public boolean onDoubleTap(MotionEvent e) {
+        mListener.onDoubleTap();
+        return true;
+    }
+
     public interface SimpleGestureListener {
         void onSwipe(SwipeDirection direction);
+        void onDoubleTap();
     }
 }

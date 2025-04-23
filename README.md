@@ -8,6 +8,7 @@ in C++ with OpenGL ES/Vulkan using NDK and JNI.
 - Realtime camera filters. Processing video frames in GLSL Shaders (OpenGL ES) to apply filters.
   Swipe right to change filter.
 - Swipe up to change preview size.
+- Double tap to switch camera.
 
 <br />
 <div class="centered">

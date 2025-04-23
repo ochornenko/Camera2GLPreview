@@ -23,18 +23,18 @@ void mat4f_load_rotate_mat(float *m, float rotation) {
 void mat4f_load_scale_mat(float *m, size_t surfaceWidth, size_t surfaceHeight,
                           size_t frameWidth, size_t frameHeight, bool mirrorX, bool mirrorY) {
 
-    float targetAspectRatio = (float) surfaceWidth / (float) surfaceHeight;
+    float surfaceAspectRatio = (float) surfaceWidth / (float) surfaceHeight;
     float frameAspectRatio = (float) frameHeight / (float) frameWidth;
 
     float scaleX = 1.f;
     float scaleY = 1.f;
 
-    if (frameAspectRatio > targetAspectRatio) {
-        scaleX = targetAspectRatio / frameAspectRatio;
+    if (frameAspectRatio > surfaceAspectRatio) {
+        scaleX = surfaceAspectRatio / frameAspectRatio;
         scaleY = 1.f;
     } else {
         scaleX = 1.f;
-        scaleY = frameAspectRatio / targetAspectRatio;
+        scaleY = frameAspectRatio / surfaceAspectRatio;
     }
 
     load_identity(m);

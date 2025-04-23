@@ -62,6 +62,8 @@ public class CameraController implements PreviewFrameHandler {
     private Integer mSensorOrientation;
     private List<Size> mOutputSizes = new ArrayList<>();
     private Size mPreviewSize;
+    private int mWidth = 0;
+    private int mHeight = 0;
 
     public CameraController(Context context, VideoRenderer videoRenderer) {
         mContext = context;
@@ -74,16 +76,15 @@ public class CameraController implements PreviewFrameHandler {
         mVideoRenderer.drawVideoFrame(data, width, height, getOrientation(), isMirrored());
     }
 
-    public Integer getSensorOrientation() {
-        return mSensorOrientation;
-    }
-
     public List<Size> getOutputSizes() {
         return mOutputSizes;
     }
 
     public void initialize(int width, int height) {
-        initializeOutputSizes();
+        mWidth = width;
+        mHeight = height;
+
+        setupCameraId(CameraCharacteristics.LENS_FACING_FRONT);
 
         mPreviewSize = getOptimalPreviewSize(width, height);
 
@@ -107,6 +108,18 @@ public class CameraController implements PreviewFrameHandler {
         mPreviewSize = size;
 
         stopCamera();
+        openCamera();
+        startCamera();
+    }
+
+    public void switchCamera() {
+        boolean isFront = mFacing == CameraCharacteristics.LENS_FACING_FRONT;
+
+        stopCamera();
+        setupCameraId(isFront ? CameraCharacteristics.LENS_FACING_BACK : CameraCharacteristics.LENS_FACING_FRONT);
+
+        mPreviewSize = getOptimalPreviewSize(mWidth, mHeight);
+
         openCamera();
         startCamera();
     }
@@ -302,14 +315,14 @@ public class CameraController implements PreviewFrameHandler {
         return optimalSize;
     }
 
-    private void initializeOutputSizes() {
+    private void setupCameraId(int lensFacing) {
         CameraManager manager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
         try {
             for (String cameraId : manager.getCameraIdList()) {
                 CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
 
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-                if (facing == CameraCharacteristics.LENS_FACING_FRONT) {
+                if (facing == lensFacing) {
                     StreamConfigurationMap streamConfigs = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
                     if (streamConfigs != null) {
                         mOutputSizes = Arrays.asList(streamConfigs.getOutputSizes(SurfaceTexture.class));
@@ -326,7 +339,7 @@ public class CameraController implements PreviewFrameHandler {
 
     private int getOrientation() {
         int rotation = ((Activity) mContext).getWindowManager().getDefaultDisplay().getRotation();
-        return (ORIENTATIONS.get(rotation) + getSensorOrientation() + 270) % 360;
+        return (ORIENTATIONS.get(rotation) + mSensorOrientation + 270) % 360;
     }
 
     private boolean isMirrored() {

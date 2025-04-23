@@ -65,6 +65,11 @@ public abstract class BaseActivity extends FragmentActivity implements SimpleGes
         return super.onTouchEvent(event);
     }
 
+    @Override
+    public void onDoubleTap() {
+        mCameraController.switchCamera();
+    }
+
     public void showResolutionDialog(List<Size> items) {
         mResolutionDialog.setItems(items);
         mResolutionDialog.show();
