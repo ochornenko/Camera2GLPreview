@@ -18,8 +18,8 @@ public class VKVideoRenderer extends VideoRenderer implements SurfaceHolder.Call
     }
 
     @Override
-    public void drawVideoFrame(byte[] data, int width, int height, int rotation) {
-        draw(data, width, height, rotation);
+    public void drawVideoFrame(byte[] data, int width, int height, int rotation, boolean mirror) {
+        draw(data, width, height, rotation, mirror);
     }
 
     @Override

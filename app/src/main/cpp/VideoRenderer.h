@@ -1,7 +1,6 @@
 #ifndef _H_VIDEO_RENDERER_
 #define _H_VIDEO_RENDERER_
 
-#include <cstdint>
 #include <memory>
 #include <android/native_window.h>
 #include <android/asset_manager.h>
@@ -35,7 +34,7 @@ public:
     virtual void updateFrame(const video_frame &frame) = 0;
 
     virtual void
-    draw(uint8_t *buffer, size_t length, size_t width, size_t height, float rotation) = 0;
+    draw(uint8_t *buffer, size_t length, size_t width, size_t height, float rotation, bool mirror) = 0;
 
     virtual void setParameters(uint32_t params) = 0;
 
@@ -44,12 +43,13 @@ public:
     virtual int createProgram(const char *pVertexSource, const char *pFragmentSource) = 0;
 
 protected:
-    size_t m_width;
-    size_t m_height;
-    size_t m_backingWidth;
-    size_t m_backingHeight;
+    size_t m_frameWidth;
+    size_t m_frameHeight;
+    size_t m_surfaceWidth;
+    size_t m_surfaceHeight;
     uint32_t m_params;
     float m_rotation;
+    bool m_mirror;
 
     bool isDirty;
     bool isProgramChanged;

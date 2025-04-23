@@ -12,8 +12,7 @@
 VKVideoRendererYUV420::VKVideoRendererYUV420()
         : texType{tTexY, tTexU, tTexV},
           m_pBuffer(nullptr),
-          m_indexCount(0),
-          m_length(0) {
+          m_indexCount(0) {
     m_deviceInfo.initialized = false;
 }
 
@@ -48,8 +47,8 @@ void VKVideoRendererYUV420::createRenderPipeline() {
 
 void VKVideoRendererYUV420::init(ANativeWindow *window, AAssetManager *assetManager, size_t width,
                                  size_t height) {
-    m_backingWidth = width;
-    m_backingHeight = height;
+    m_surfaceWidth = width;
+    m_surfaceHeight = height;
 
     m_assetManager = assetManager;
 
@@ -108,14 +107,14 @@ void VKVideoRendererYUV420::updateFrame(const video_frame &frame) {
 }
 
 void VKVideoRendererYUV420::draw(uint8_t *buffer, size_t length, size_t width, size_t height,
-                                 float rotation) {
+                                 float rotation, bool mirror) {
     m_pBuffer = buffer;
-    m_length = length;
     m_rotation = rotation;
+    m_mirror = mirror;
 
-    if (isInitialized() && (m_width != width || m_height != height)) {
-        m_width = width;
-        m_height = height;
+    if (isInitialized() && (m_frameWidth != width || m_frameHeight != height)) {
+        m_frameWidth = width;
+        m_frameHeight = height;
 
         deleteUniformBuffers();
         deleteTextures();
@@ -126,8 +125,8 @@ void VKVideoRendererYUV420::draw(uint8_t *buffer, size_t length, size_t width, s
         updateDescriptorSet();
         createCommandPool();
     } else {
-        m_width = width;
-        m_height = height;
+        m_frameWidth = width;
+        m_frameHeight = height;
     }
 
     if (!isInitialized()) {
@@ -151,7 +150,7 @@ uint32_t VKVideoRendererYUV420::getParameters() {
 
 bool VKVideoRendererYUV420::createTextures() {
     for (int i = 0; i < kTextureCount; i++) {
-        loadTexture(m_pBuffer, texType[i], m_width, m_height, &textures[i],
+        loadTexture(m_pBuffer, texType[i], m_frameWidth, m_frameHeight, &textures[i],
                     VK_IMAGE_USAGE_SAMPLED_BIT,
                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
@@ -195,7 +194,7 @@ bool VKVideoRendererYUV420::createTextures() {
 
 bool VKVideoRendererYUV420::updateTextures() {
     for (int i = 0; i < kTextureCount; i++) {
-        size_t offset = getBufferOffset(&textures[i], texType[i], m_width, m_height);
+        size_t offset = getBufferOffset(&textures[i], texType[i], m_frameWidth, m_frameHeight);
         copyTextureData(&textures[i], m_pBuffer + offset);
     }
     return true;
@@ -267,7 +266,7 @@ VKVideoRendererYUV420::createDevice(ANativeWindow *platformWindow, VkApplication
     vkGetPhysicalDeviceQueueFamilyProperties(m_deviceInfo.physicalDevice, &queueFamilyCount,
                                              nullptr);
     assert(queueFamilyCount);
-    std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyCount);
+    std::vector <VkQueueFamilyProperties> queueFamilyProperties(queueFamilyCount);
     vkGetPhysicalDeviceQueueFamilyProperties(m_deviceInfo.physicalDevice, &queueFamilyCount,
                                              queueFamilyProperties.data());
 
@@ -325,7 +324,7 @@ void VKVideoRendererYUV420::createSwapChain() {
     vkGetPhysicalDeviceSurfaceFormatsKHR(m_deviceInfo.physicalDevice, m_deviceInfo.surface,
                                          &formatCount, nullptr);
 
-    std::unique_ptr<VkSurfaceFormatKHR[]> formats = std::make_unique<VkSurfaceFormatKHR[]>(
+    std::unique_ptr < VkSurfaceFormatKHR[] > formats = std::make_unique<VkSurfaceFormatKHR[]>(
             formatCount);
 
     vkGetPhysicalDeviceSurfaceFormatsKHR(m_deviceInfo.physicalDevice, m_deviceInfo.surface,
@@ -954,17 +953,10 @@ bool VKVideoRendererYUV420::mapMemoryTypeToIndex(uint32_t typeBits, VkFlags requ
 }
 
 void VKVideoRendererYUV420::updateUniformBuffers() {
-    float targetAspectRatio = (float) m_width / (float) m_height;
+    mat4f_load_rotate_mat(m_ubo.rotation, m_rotation);
 
-    mat4f_load_ortho(-1.0f, 1.0f, -targetAspectRatio, targetAspectRatio, -1.0f, 1.0f,
-                     m_ubo.projection);
-
-    mat4f_load_rotation_z(m_rotation + 180, m_ubo.rotation);
-
-    float scaleFactor = aspect_ratio_correction(false, m_backingWidth, m_backingHeight, m_width,
-                                                m_height);
-
-    mat4f_load_scale(scaleFactor, scaleFactor, 1.0f, m_ubo.scale);
+    mat4f_load_scale_mat(m_ubo.scale, m_surfaceWidth, m_surfaceHeight,
+                         m_frameWidth, m_frameHeight, m_mirror, false);
 }
 
 void VKVideoRendererYUV420::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {

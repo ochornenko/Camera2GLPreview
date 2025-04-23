@@ -6,13 +6,13 @@ static const char kVertexShader[] =
     "#version 100\n\
     varying vec2 v_texcoord; \
     attribute vec4 position; \
-    attribute vec2 texcoord; \
-    uniform mat4 projection; \
-    uniform mat4 rotation; \
+    attribute vec4 texcoord; \
     uniform mat4 scale; \
+    uniform mat4 rotation; \
     void main() { \
-        v_texcoord = texcoord; \
-        gl_Position = projection * rotation * scale * position; \
+        vec4 transformed = rotation * scale * vec4(texcoord.xy - 0.5, 0.0, 1.0); \
+        v_texcoord = transformed.xy + 0.5; \
+        gl_Position = position; \
     }";
 
 // Pixel shader, YUV420 to RGB conversion.

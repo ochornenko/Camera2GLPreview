@@ -19,7 +19,7 @@ public:
 
     void updateFrame(const video_frame &frame) override;
 
-    void draw(uint8_t *buffer, size_t length, size_t width, size_t height, float rotation) override;
+    void draw(uint8_t *buffer, size_t length, size_t width, size_t height, float rotation, bool mirror) override;
 
     void setParameters(uint32_t params) override;
 
@@ -38,7 +38,6 @@ private:
     };
 
     struct UniformBufferObject {
-        float projection[16];
         float rotation[16];
         float scale[16];
     };
@@ -123,7 +122,6 @@ private:
 
     uint8_t *m_pBuffer;
     uint32_t m_indexCount;
-    __unused  size_t m_length;
 
     AAssetManager *m_assetManager;
 

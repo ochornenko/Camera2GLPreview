@@ -18,8 +18,8 @@ void VideoRendererContext::render() {
 }
 
 void VideoRendererContext::draw(uint8_t *buffer, size_t length, size_t width, size_t height,
-                                float rotation) {
-    m_pVideoRenderer->draw(buffer, length, width, height, rotation);
+                                float rotation, bool mirror) {
+    m_pVideoRenderer->draw(buffer, length, width, height, rotation, mirror);
 }
 
 void VideoRendererContext::setParameters(uint32_t params) {

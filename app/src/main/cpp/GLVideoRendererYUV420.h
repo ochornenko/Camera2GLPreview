@@ -1,5 +1,3 @@
-#include <__bit_reference>
-
 #ifndef _GL_VIDEO_RENDERER_YUV_H_
 #define _GL_VIDEO_RENDERER_YUV_H_
 
@@ -19,7 +17,7 @@ public:
 
     void updateFrame(const video_frame &frame) override;
 
-    void draw(uint8_t *buffer, size_t length, size_t width, size_t height, float rotation) override;
+    void draw(uint8_t *buffer, size_t length, size_t width, size_t height, float rotation, bool mirror) override;
 
     void setParameters(uint32_t params) override;
 
@@ -45,7 +43,6 @@ private:
     uint8_t *m_pDataU;
     uint8_t *m_pDataV;
 
-    __unused  size_t m_length;
     size_t m_sizeY;
     size_t m_sizeU;
     size_t m_sizeV;
@@ -55,14 +52,13 @@ private:
     GLuint m_textureIdV;
 
     GLuint m_vertexPos;
+    GLint m_rotationLoc;
+    GLint m_scaleLoc;
     GLuint m_textureLoc;
     GLint m_textureYLoc;
     GLint m_textureULoc;
     GLint m_textureVLoc;
     GLint m_textureSize;
-    GLint m_uniformProjection;
-    GLint m_uniformRotation;
-    GLint m_uniformScale;
 };
 
 #endif //_GL_VIDEO_RENDERER_YUV_H_

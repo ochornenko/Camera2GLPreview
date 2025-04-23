@@ -29,14 +29,14 @@ JCMCPRV(void, render)(JNIEnv *env, jobject obj) {
 }
 
 JCMCPRV(void, draw)(JNIEnv *env, jobject obj, jbyteArray data, jint width, jint height,
-                    jint rotation) {
+                    jint rotation, jboolean mirror) {
     jbyte *bufferPtr = env->GetByteArrayElements(data, nullptr);
 
     jsize arrayLength = env->GetArrayLength(data);
 
     VideoRendererContext *context = VideoRendererContext::getContext(env, obj);
 
-    if (context) context->draw((uint8_t *) bufferPtr, (size_t) arrayLength, (size_t) width, (size_t) height, rotation);
+    if (context) context->draw((uint8_t *) bufferPtr, (size_t) arrayLength, (size_t) width, (size_t) height, rotation, mirror);
 
     env->ReleaseByteArrayElements(data, bufferPtr, 0);
 }

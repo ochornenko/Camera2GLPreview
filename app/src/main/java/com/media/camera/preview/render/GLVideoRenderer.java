@@ -26,8 +26,8 @@ public class GLVideoRenderer extends VideoRenderer implements GLSurfaceView.Rend
     }
 
     @Override
-    public void drawVideoFrame(byte[] data, int width, int height, int rotation) {
-        draw(data, width, height, rotation);
+    public void drawVideoFrame(byte[] data, int width, int height, int rotation, boolean mirror) {
+        draw(data, width, height, rotation, mirror);
         requestRender();
     }
 

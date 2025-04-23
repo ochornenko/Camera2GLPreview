@@ -32,13 +32,13 @@ public abstract class VideoRenderer {
 
     protected native void render();
 
-    protected native void draw(byte[] data, int width, int height, int rotation);
+    protected native void draw(byte[] data, int width, int height, int rotation, boolean mirror);
 
     protected native void setParameters(int params);
 
     protected native int getParameters();
 
-    public abstract void drawVideoFrame(byte[] data, int width, int height, int rotation);
+    public abstract void drawVideoFrame(byte[] data, int width, int height, int rotation, boolean mirror);
 
     public void destroyRenderer() {
         destroy();

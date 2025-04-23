@@ -3,9 +3,11 @@
 
 #include <cstddef>
 
-void mat4f_load_ortho(float left, float right, float bottom, float top, float near, float far, float* mat4f);
-void mat4f_load_rotation_z(float rotation, float* mat4f);
-void mat4f_load_scale(float scaleX, float scaleY, float scaleZ, float* mat4f);
-float aspect_ratio_correction(bool fillScreen, size_t backingWidth, size_t backingHeight, size_t width, size_t height);
+void load_identity(float *m);
+
+void mat4f_load_rotate_mat(float *m, float rotation);
+
+void mat4f_load_scale_mat(float *m, size_t surfaceWidth, size_t surfaceHeight,
+                          size_t frameWidth, size_t frameHeight, bool mirrorX, bool mirror);
 
 #endif //_COMMON_UTILS_H_
