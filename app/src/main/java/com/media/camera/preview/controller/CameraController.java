@@ -330,6 +330,7 @@ public class CameraController implements PreviewFrameHandler {
                     mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
                     mCameraId = cameraId;
                     mFacing = manager.getCameraCharacteristics(cameraId).get(CameraCharacteristics.LENS_FACING);
+                    break;
                 }
             }
         } catch (CameraAccessException e) {

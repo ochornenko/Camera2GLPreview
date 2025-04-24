@@ -1,6 +1,7 @@
 package com.media.camera.preview.adapter;
 
 import android.support.annotation.NonNull;
+import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -45,7 +46,30 @@ public class ItemAdapter<T> extends RecyclerView.Adapter<ItemAdapter.ViewHolder>
     }
 
     public void setItems(List<T> items) {
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override
+            public int getOldListSize() {
+                return mItems.size();
+            }
+
+            @Override
+            public int getNewListSize() {
+                return items.size();
+            }
+
+            @Override
+            public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+                return mItems.get(oldItemPosition).equals(items.get(newItemPosition));
+            }
+
+            @Override
+            public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+                return mItems.get(oldItemPosition).equals(items.get(newItemPosition));
+            }
+        });
+
         mItems = items;
+        diffResult.dispatchUpdatesTo(this);
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

@@ -21,10 +21,6 @@ public class GLVideoRenderer extends VideoRenderer implements GLSurfaceView.Rend
         mGLSurface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
 
-    public void destroyRender() {
-        destroy();
-    }
-
     @Override
     public void drawVideoFrame(byte[] data, int width, int height, int rotation, boolean mirror) {
         draw(data, width, height, rotation, mirror);
