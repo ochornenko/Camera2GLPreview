@@ -292,7 +292,7 @@ GLuint GLVideoRendererYUV420::useProgram() {
         glUniformMatrix4fv(m_rotationLoc, 1, GL_FALSE, rotation);
 
         float scale[16];
-        mat4f_load_scale_mat(scale, m_surfaceWidth, m_surfaceHeight, m_frameWidth, m_frameHeight,
+        mat4f_load_scale_mat(scale, m_rotation, m_surfaceWidth, m_surfaceHeight, m_frameWidth, m_frameHeight,
                              m_mirror, true);
         glUniformMatrix4fv(m_scaleLoc, 1, GL_FALSE, scale);
 

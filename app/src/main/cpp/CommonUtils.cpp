@@ -11,33 +11,41 @@ void load_identity(float *m) {
 
 void mat4f_load_rotate_mat(float *m, float rotation) {
     load_identity(m);
+
     float radians = rotation * (float) M_PI / 180.0f;
     float c = cosf(radians);
     float s = sinf(radians);
+
     m[0] = c;
     m[1] = s;
     m[4] = -s;
     m[5] = c;
 }
 
-void mat4f_load_scale_mat(float *m, size_t surfaceWidth, size_t surfaceHeight,
+void mat4f_load_scale_mat(float *m, int rotation, size_t surfaceWidth, size_t surfaceHeight,
                           size_t frameWidth, size_t frameHeight, bool mirrorX, bool mirrorY) {
+    auto rotatedFrameWidth = frameHeight;
+    auto rotatedFrameHeight = frameWidth;
+
+    if (rotation % 180 == 0) {
+        rotatedFrameWidth = frameWidth;
+        rotatedFrameHeight = frameHeight;
+    }
 
     float surfaceAspectRatio = (float) surfaceWidth / (float) surfaceHeight;
-    float frameAspectRatio = (float) frameHeight / (float) frameWidth;
+    float frameAspectRatio = (float) rotatedFrameWidth / (float) rotatedFrameHeight;
 
-    float scaleX = 1.f;
-    float scaleY = 1.f;
+    float scaleX = 1.0f;
+    float scaleY = 1.0f;
 
     if (frameAspectRatio > surfaceAspectRatio) {
         scaleX = surfaceAspectRatio / frameAspectRatio;
-        scaleY = 1.f;
     } else {
-        scaleX = 1.f;
         scaleY = frameAspectRatio / surfaceAspectRatio;
     }
 
     load_identity(m);
+
     m[0] = mirrorX ? scaleX : -scaleX;
     m[5] = mirrorY ? scaleY : -scaleY;
 }

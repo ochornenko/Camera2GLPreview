@@ -951,7 +951,7 @@ bool VKVideoRendererYUV420::mapMemoryTypeToIndex(uint32_t typeBits, VkFlags requ
 void VKVideoRendererYUV420::updateUniformBuffers() {
     mat4f_load_rotate_mat(m_ubo.rotation, m_rotation);
 
-    mat4f_load_scale_mat(m_ubo.scale, m_surfaceWidth, m_surfaceHeight,
+    mat4f_load_scale_mat(m_ubo.scale, m_rotation, m_surfaceWidth, m_surfaceHeight,
                          m_frameWidth, m_frameHeight, m_mirror, false);
 }
 
