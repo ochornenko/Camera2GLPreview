@@ -82,7 +82,7 @@ public class GLActivity extends BaseActivity implements ActivityCompat.OnRequest
                         if (null != mErrorDialog) {
                             mErrorDialog.dismiss();
                         } else {
-                            mCameraController.startCamera();
+                            recreate();
                         }
                     }
                 }
